@@ -27,7 +27,7 @@ export function StatCard({ title, amount, items, iconPath, color, bgColor, onAct
 
             {/* PARTE CENTRAL: Monto Gigante */}
             <div className="mt-2 pl-1">
-                <p className={`text-4xl font-extrabold tracking-tight ${color}`}>{amount}</p>
+                <p className={`text-4xl font-semibold tracking-tight ${color}`}>{amount}</p>
             </div>
 
             {/* PARTE INFERIOR: Texto pequeño y Botón GRIS */}

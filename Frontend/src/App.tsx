@@ -7,6 +7,9 @@ import { Sidebar } from './components/layout/Sidebar';
 import { SplashScreen } from './components/common/SplashScreen';
 
 // Páginas
+import  Proveedores  from './pages/Proveedores';
+import  Fiados  from './pages/Fiados';
+import  Kardex  from './pages/Kardex';
 import { Dashboard } from './pages/Dashboard';
 import { Inventory } from './pages/Inventory';
 import { Ventas } from './pages/Ventas';
@@ -75,6 +78,9 @@ function App() {
                         <Route path="/ventas" element={<Ventas />} />
                         <Route path="/ganancia" element={<Ganancia />} />
                         <Route path="/configuraciones" element={<Settings />} />
+                        <Route path="/proveedores" element={<Proveedores />} />
+                        <Route path="/fiados" element={<Fiados />} />
+                        <Route path="/kardex" element={<Kardex />} />
                     </Routes>
                 </main>
             </div>

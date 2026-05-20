@@ -6,44 +6,57 @@ import { ProductModal } from '../components/inventory/ProductModal';
 import { Product } from '../types/product';
 
 export function Inventory() {
-    const location = useLocation(); // <-- Para leer cómo llegamos a esta página
+    const location = useLocation();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [products, setProducts] = useState<Product[]>([]);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
     // Estados para los filtros
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('Todas');
-    const [selectedStatus, setSelectedStatus] = useState('Todos'); // <-- NUEVO: Filtro de estado
+    const [selectedStatus, setSelectedStatus] = useState('Todos');
 
-    // --- EFECTO MÁGICO: Abrir modal o aplicar filtro si venimos del Dashboard ---
+    // ==========================================
+    // MAGIA DE LOCALSTORAGE (SIN HARDCODEAR)
+    // ==========================================
+
+    // 1. Cargamos los productos guardados al iniciar la página
+    const [products, setProducts] = useState<Product[]>(() => {
+        const savedProducts = localStorage.getItem('bodega_productos');
+        if (savedProducts) {
+            return JSON.parse(savedProducts);
+        } else {
+            return []; // Empezamos en blanco si no hay nada guardado
+        }
+    });
+
+    // 2. Cada vez que la lista "products" cambie, la guardamos en el navegador
+    useEffect(() => {
+        localStorage.setItem('bodega_productos', JSON.stringify(products));
+    }, [products]);
+
+    // ==========================================
+
     useEffect(() => {
         if (location.state) {
-            // 1. Si mandamos a abrir el modal
             if (location.state.openModal) {
                 setIsModalOpen(true);
             }
-            // 2. Si mandamos a filtrar por estado (Ej. "Bajo Stock")
             if (location.state.filterStatus) {
                 setSelectedStatus(location.state.filterStatus);
             }
-
-            // Limpiamos el historial de navegación para que si el usuario presiona F5, no se vuelva a ejecutar la orden
             window.history.replaceState({}, document.title);
         }
     }, [location]);
 
-    // Función para Guardar (Sirve para Crear uno Nuevo o para Editar uno existente)
+    // Función para Guardar (Nuevo o Editar)
     const handleSaveProduct = (savedProduct: Product) => {
         if (editingProduct) {
-            // Si estábamos editando, actualizamos el producto en la lista
             setProducts(products.map(p => p.id === savedProduct.id ? savedProduct : p));
         } else {
-            // Si es nuevo, lo agregamos al principio
             setProducts([savedProduct, ...products]);
         }
-        setEditingProduct(null); // Limpiamos el estado
+        setEditingProduct(null);
     };
 
     // Función para Eliminar
@@ -53,24 +66,24 @@ export function Inventory() {
         }
     };
 
-    // Función para Editar (Guarda el producto y abre el modal)
+    // Función para Editar
     const handleEditProduct = (product: Product) => {
         setEditingProduct(product);
         setIsModalOpen(true);
     };
 
-    // Función para cerrar el modal y limpiar el modo edición
+    // Función para cerrar modal
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditingProduct(null);
     };
 
-    // Lógica de Filtrado (Ahora incluye el status)
+    // Lógica de Filtrado
     const filteredProducts = products.filter(product => {
         const matchesSearch = product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.codigo.includes(searchTerm);
         const matchesCategory = selectedCategory === 'Todas' || product.categoria === selectedCategory;
-        const matchesStatus = selectedStatus === 'Todos' || product.status === selectedStatus; // <-- NUEVA REGLA
+        const matchesStatus = selectedStatus === 'Todos' || product.status === selectedStatus;
 
         return matchesSearch && matchesCategory && matchesStatus;
     });
@@ -81,7 +94,7 @@ export function Inventory() {
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 onSave={handleSaveProduct}
-                productToEdit={editingProduct} // Le pasamos el producto al modal
+                productToEdit={editingProduct}
             />
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -118,7 +131,7 @@ export function Inventory() {
                     </select>
                 </div>
 
-                {/* NUEVO: Estado (Stock) */}
+                {/* Filtro de Estado */}
                 <div className="w-full md:w-48">
                     <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition text-sm bg-white cursor-pointer">
                         <option value="Todos">Todos los estados</option>
@@ -134,7 +147,6 @@ export function Inventory() {
                 onDelete={handleDeleteProduct}
                 onEdit={handleEditProduct}
             />
-
         </div>
     );
 }
