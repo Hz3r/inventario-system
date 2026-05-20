@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 
 export function RightPanel() {
-    const navigate = useNavigate(); // <-- Iniciamos el hook de navegación
+    const navigate = useNavigate();
 
     return (
         <div className="space-y-8">
@@ -28,7 +28,7 @@ export function RightPanel() {
                 <h3 className="font-bold text-gray-800 mb-4">Gestión Rápida</h3>
                 <div className="space-y-3">
 
-                    {/* BOTÓN 1: Crear Producto (Navega y manda la orden de abrir el modal) */}
+                    {/* BOTÓN 1: Crear Producto */}
                     <button
                         onClick={() => navigate('/inventario', { state: { openModal: true } })}
                         className="w-full bg-white p-3 rounded-xl flex items-center gap-3 shadow-sm hover:shadow-md transition group"
@@ -42,9 +42,9 @@ export function RightPanel() {
                         </div>
                     </button>
 
-                    {/* BOTÓN 2: Ver Reporte (Resumen) */}
+                    {/* BOTÓN 2: Ver Reporte (AHORA LLEVA A VENTAS) */}
                     <button
-                        onClick={() => alert("Función de reporte en construcción 🚧")}
+                        onClick={() => navigate('/ventas')} // <--- CORREGIDO: Viaja a la pantalla de ventas
                         className="w-full bg-white p-3 rounded-xl flex items-center gap-3 shadow-sm hover:shadow-md transition group"
                     >
                         <div className="bg-black p-2 rounded-md group-hover:bg-gray-800 transition">

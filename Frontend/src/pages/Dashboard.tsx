@@ -1,18 +1,21 @@
-// src/pages/Dashboard.tsx
-import { useNavigate } from 'react-router-dom'; // <-- 1. Importamos el gancho de navegación
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { StatCard } from '../components/dashboard/StatCard';
 import { RightPanel } from '../components/dashboard/RightPanel';
+import { dashboardService } from '../services/dashboardService';
 
 export function Dashboard() {
-    const navigate = useNavigate(); // <-- 2. Lo inicializamos
+    const navigate = useNavigate();
+    const [lowStock, setLowStock] = useState(0);
+
+    useEffect(() => {
+        const count = dashboardService.getLowStockCount();
+        setLowStock(count);
+    }, []);
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-
-            {/* COLUMNA IZQUIERDA (3 espacios) */}
             <div className="lg:col-span-3 space-y-8">
-
-                {/* 1. Tarjetas con VALORES EN CERO pero DISEÑO COLORIDO */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <StatCard
                         title="Ventas Hoy"
@@ -21,7 +24,7 @@ export function Dashboard() {
                         iconPath="/icons/venta.svg"
                         color="text-gray-300"
                         bgColor="bg-green-100"
-                        onAction={() => navigate('/ventas')} // <-- Viaja a Ventas
+                        onAction={() => navigate('/ventas')}
                     />
                     <StatCard
                         title="Ganancia Mes"
@@ -30,35 +33,33 @@ export function Dashboard() {
                         iconPath="/icons/ganancias.svg"
                         color="text-gray-300"
                         bgColor="bg-blue-100"
-                        onAction={() => navigate('/ganancia')} // <-- Viaja a Ganancia
+                        onAction={() => navigate('/ganancia')}
                     />
                     <StatCard
                         title="Stock Bajo"
-                        amount="0"
-                        items="Todo en orden"
+                        amount={lowStock.toString()}
+                        items={lowStock === 0 ? "Todo en orden" : `${lowStock} productos por reponer`}
                         iconPath="/icons/alerta.svg"
-                        color="text-gray-300"
+                        color={lowStock > 0 ? "text-red-500" : "text-gray-300"}
                         bgColor="bg-orange-100"
-                        onAction={() => navigate('/inventario', { state: { filterStatus: 'Bajo Stock' } })} // <-- Viaja a Inventario filtrado
+                        onAction={() => navigate('/inventario', { state: { filterStatus: 'Bajo Stock' } })}
                     />
                     <StatCard
                         title="Total Fiados"
                         amount="S/ 0.00"
                         items="0 pendientes"
-                        iconPath="/icons/fiado.svg"
+                        iconPath="/icons/fiado.svg" // <-- Regresamos al ícono original que te gustaba
                         color="text-gray-300"
                         bgColor="bg-amber-100"
-                        onAction={() => alert('Fiados en construcción 🚧')} // <-- Alerta temporal
+                        onAction={() => navigate('/fiados')}
                     />
                 </div>
 
-                {/* 2. Tabla de Ventas Recientes (VACÍA) */}
                 <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100 min-h-[350px]">
                     <div className="flex justify-between items-center mb-8">
                         <h3 className="font-bold text-gray-800 text-2xl">Últimas Ventas</h3>
                         <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full border border-gray-200">Hoy</span>
                     </div>
-
                     <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
@@ -70,7 +71,6 @@ export function Dashboard() {
                             </tr>
                             </thead>
                             <tbody className="text-sm">
-                            {/* FILA DE MENSAJE VACÍO */}
                             <tr>
                                 <td colSpan={4} className="py-20 text-center">
                                     <div className="flex flex-col items-center justify-center opacity-50">
@@ -87,12 +87,9 @@ export function Dashboard() {
                     </div>
                 </div>
             </div>
-
-            {/* COLUMNA DERECHA (1 espacio) - Panel Derecho */}
             <div className="lg:col-span-1">
                 <RightPanel />
             </div>
-
         </div>
     );
 }
