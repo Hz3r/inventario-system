@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Proveedor } from '../types/models';
 
 export default function Proveedores() {
