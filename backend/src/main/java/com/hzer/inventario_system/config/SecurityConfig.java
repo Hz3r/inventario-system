@@ -29,7 +29,8 @@ import java.util.List;
 
 /**
  * Seguridad del sistema:
- *  - Solo /api/auth/login está abierto. Todo lo demás exige un token válido.
+ *  - La página web (index.html, JS, CSS, íconos) es pública: sin datos, solo el "cascarón".
+ *  - En /api solo /api/auth/login está abierto. Todo lo demás exige un token válido.
  *  - El token viaja en la cabecera "Authorization: Bearer ..." en cada petición.
  *  - CORS configurado en un solo lugar (antes había un @CrossOrigin en cada controlador).
  */
@@ -76,7 +77,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers("/actuator/health").permitAll()     // para que Railway sepa si está vivo
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/**").authenticated()      // los DATOS siempre con token
+                        .anyRequest().permitAll()                       // la página web (React)
                 )
                 // Lee y valida el token en cada petición; si falta o es falso → 401
                 .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));

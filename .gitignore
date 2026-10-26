@@ -10,3 +10,6 @@ target/
 Thumbs.db
 # Archivos temporales de TypeScript
 *.tsbuildinfo
+
+# Paquete para la mini PC (se genera con empaquetar.bat)
+paquete-bodega/
