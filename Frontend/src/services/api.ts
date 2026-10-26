@@ -1,10 +1,12 @@
 // src/services/api.ts
 // Único lugar que sabe DÓNDE está el backend y CÓMO hablarle.
 
-// Por defecto el backend está en la MISMA máquina que sirve la página, puerto 8080.
-// Así funciona en la PC de la bodega (localhost) y desde el celular en el WiFi (192.168.x.x).
-// En Railway se configura VITE_API_URL al construir.
-const API_URL: string = import.meta.env.VITE_API_URL ?? `${window.location.protocol}//${window.location.hostname}:8080`;
+// - Instalado (npm run build): la página la entrega el MISMO backend → misma dirección ('').
+//   Funciona igual en la mini PC (localhost:8080), desde el celular (192.168.x.x:8080) y en Railway.
+// - Desarrollo (npm run dev): Vite corre en el 5173 y el backend en el 8080 de la misma máquina.
+// - VITE_API_URL permite forzar otra dirección si algún día hiciera falta.
+const API_URL: string = import.meta.env.VITE_API_URL
+    ?? (import.meta.env.DEV ? `${window.location.protocol}//${window.location.hostname}:8080` : '');
 
 const CLAVE_TOKEN = 'auth_token';
 

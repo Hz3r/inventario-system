@@ -146,6 +146,19 @@
 
 
 	<build>
+		<!-- El .jar se llama siempre inventario.jar -->
+		<finalName>inventario</finalName>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+			<!-- La pagina web ya construida (npm run build) va DENTRO del jar, en /static.
+			     Si la carpeta no existe (en desarrollo), Maven la ignora. -->
+			<resource>
+				<directory>${project.basedir}/../Frontend/dist</directory>
+				<targetPath>static</targetPath>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
