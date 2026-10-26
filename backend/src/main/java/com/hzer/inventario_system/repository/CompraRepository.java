@@ -14,6 +14,11 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
 
     List<Compra> findTop100ByOrderByFechaPedidoDescIdDesc();
 
+    long countByEstado(EstadoCompra estado);
+
+    @Query("SELECT COALESCE(SUM(c.total), 0) FROM Compra c WHERE c.estado = :estado")
+    BigDecimal sumaPorEstado(@Param("estado") EstadoCompra estado);
+
     // Compras recibidas y pagadas con efectivo del cajón (para el cierre de caja)
     @Query("""
            SELECT COALESCE(SUM(c.total), 0)
