@@ -15,3 +15,6 @@ export const formatFechaHora = (iso: string): string => {
         day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false,
     });
 };
+/** Fecha local "2026-10-26" (toISOString usaría UTC: después de las 7 p.m. daría el día siguiente) */
+export const fechaISO = (d: Date): string =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

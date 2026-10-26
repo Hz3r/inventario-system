@@ -21,6 +21,10 @@ export const posService = {
 
     obtenerVenta: (id: number) => api.get<Venta>(`/api/pos/ventas/${id}`),
 
+    /** Ventas entre dos fechas ("2026-10-01"), ambas incluidas */
+    ventasEntre: (desde: string, hasta: string) =>
+        api.get<Venta[]>(`/api/pos/ventas?desde=${desde}&hasta=${hasta}`),
+
     ventasDeCaja: (cajaId: number) => api.get<Venta[]>(`/api/pos/ventas/caja/${cajaId}`),
 
     anularVenta: (id: number, motivo: string) =>
