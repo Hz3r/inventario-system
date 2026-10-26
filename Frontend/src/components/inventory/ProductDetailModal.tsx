@@ -7,6 +7,7 @@ import {
     type MotivoAjuste, type Movimiento, type Presentacion, type Producto,
 } from '../../types/inventario';
 import { formatCantidad, formatFechaHora, formatSoles } from '../../utils/formato';
+import { refrescarNotificaciones } from '../notificaciones/useNotificaciones';
 
 type Tab = 'presentaciones' | 'ajuste' | 'kardex';
 
@@ -286,6 +287,7 @@ function AjusteTab({ producto, onDone }: { producto: Producto; onDone: () => Pro
                 cantidad: cant,
                 nota: nota.trim() || null,
             });
+            refrescarNotificaciones();
             setExito(`Listo: ${MOTIVO_LABEL[mov.motivo]} de ${formatCantidad(Math.abs(mov.cantidad))} ${unidad}. ` +
                 `Stock ${formatCantidad(mov.stockAnterior)} → ${formatCantidad(mov.stockResultante)}.`);
             setCantidad('');

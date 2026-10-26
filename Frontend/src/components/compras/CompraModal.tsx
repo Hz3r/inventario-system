@@ -9,6 +9,7 @@ import {
 } from '../../types/compras';
 import { formatCantidad, formatFechaHora, formatSoles } from '../../utils/formato';
 import { LineasCompra, aItems, lineasValidas, nuevaLineaKey, totalCentLineas, type LineaCompra } from './LineasCompra';
+import { refrescarNotificaciones } from '../notificaciones/useNotificaciones';
 
 interface Props {
     compraId: number;
@@ -64,6 +65,7 @@ export function CompraModal({ compraId, productos, onClose, onChanged }: Props) 
                 actualizarCostos,
                 nota: null,
             }));
+            refrescarNotificaciones();
             onChanged();
         } catch (e) {
             setError(e instanceof ApiError ? e.message : 'No se pudo recibir la compra');

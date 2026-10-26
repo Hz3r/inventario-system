@@ -4,6 +4,7 @@ import com.hzer.inventario_system.entities.Proveedor;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
 
@@ -14,4 +15,9 @@ public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
     boolean existsByRuc(String ruc);
 
     boolean existsByRucAndIdNot(String ruc, Long id);
+
+    // Para la importación desde Excel
+    Optional<Proveedor> findByRuc(String ruc);
+
+    Optional<Proveedor> findFirstByActivoTrueAndNombreIgnoreCase(String nombre);
 }

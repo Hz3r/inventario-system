@@ -6,6 +6,7 @@ import { ApiError } from '../../services/api';
 import { METODO_LABEL, type Cliente, type MetodoPago, type Venta, type VentaItemRequest } from '../../types/pos';
 import { formatSoles } from '../../utils/formato';
 import { centavos } from '../../utils/dinero';
+import { refrescarNotificaciones } from '../notificaciones/useNotificaciones';
 
 interface Props {
     total: number;
@@ -105,6 +106,7 @@ export function CobroModal({ total, descuento, items, onClose, onDone }: Props) 
                 efectivoRecibido: recibidoCent !== null && efectivoCent > 0 ? recibidoCent / 100 : null,
                 nota: null,
             });
+            refrescarNotificaciones();
             onDone(venta);
         } catch (err) {
             setError(err instanceof ApiError ? err.message : 'No se pudo registrar la venta');

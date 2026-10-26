@@ -1,6 +1,7 @@
 // src/pages/Inventory.tsx
 import { useCallback, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { FileSpreadsheet } from 'lucide-react';
 import { ProductTable } from '../components/inventory/ProductTable';
 import { ProductModal } from '../components/inventory/ProductModal';
 import { inventarioService } from '../services/inventarioService';
@@ -137,6 +138,12 @@ export function Inventory() {
                     </p>
                 </div>
                 <div className="flex gap-3">
+                    <Link
+                        to="/importar"
+                        className="bg-white text-gray-800 border border-gray-200 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition flex items-center gap-2"
+                    >
+                        <FileSpreadsheet className="w-4 h-4 text-green-600" /> Importar Excel
+                    </Link>
                     <button
                         onClick={() => setIsCategoriasOpen(true)}
                         className="bg-white text-gray-800 border border-gray-200 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition"

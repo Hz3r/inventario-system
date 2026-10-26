@@ -14,6 +14,8 @@ public interface CategoryRepository extends JpaRepository<Categoria, Long> {
 
         List<Categoria> findAllByOrderByNombreAsc();
 
+        Optional<Categoria> findFirstByNombreIgnoreCase(String nombre);
+
         // "Bebidas" y "bebidas" cuentan como la misma
         boolean existsByNombreIgnoreCase(String nombre);
 

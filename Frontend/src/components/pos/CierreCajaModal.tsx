@@ -5,6 +5,7 @@ import { ApiError } from '../../services/api';
 import { METODO_LABEL, type Caja, type MetodoPago } from '../../types/pos';
 import { formatFechaHora, formatSoles } from '../../utils/formato';
 import { centavos } from '../../utils/dinero';
+import { refrescarNotificaciones } from '../notificaciones/useNotificaciones';
 
 interface Props {
     caja: Caja;
@@ -46,6 +47,7 @@ export function CierreCajaModal({ caja, onClose, onCerrada }: Props) {
         setError(null);
         try {
             setResultado(await posService.cerrarCaja(Number(contado), nota.trim() || null));
+            refrescarNotificaciones();
         } catch (err) {
             setError(err instanceof ApiError ? err.message : 'No se pudo cerrar la caja');
         } finally {

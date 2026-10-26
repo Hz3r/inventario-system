@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Modifying;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +40,24 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
            ORDER BY p.stockActual ASC
            """)
         List<Producto> findStockBajo();
+
+        // Para las notificaciones: agotados (aunque no tengan mínimo) y los que llegaron al mínimo
+        @Query("""
+           SELECT p FROM Producto p
+           WHERE p.activo = true
+             AND (p.stockActual <= 0
+                  OR (p.stockMinimo IS NOT NULL AND p.stockActual <= p.stockMinimo))
+           ORDER BY p.stockActual ASC, p.nombre ASC
+           """)
+        List<Producto> findConAlertaDeStock();
+
+        // Vencidos o que vencen hasta la fecha indicada (los más próximos primero)
+        List<Producto> findByActivoTrueAndVencimientoLessThanEqualOrderByVencimientoAsc(LocalDate hasta);
+
+        // Para la importación desde Excel
+        Optional<Producto> findByCodigoBarras(String codigoBarras);
+
+        Optional<Producto> findFirstByActivoTrueAndNombreIgnoreCase(String nombre);
 
         // Bloquea la fila mientras se cambia el stock (ver explicación)
         @Lock(LockModeType.PESSIMISTIC_WRITE)

@@ -8,11 +8,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface CompraRepository extends JpaRepository<Compra, Long> {
 
     List<Compra> findTop100ByOrderByFechaPedidoDescIdDesc();
+
+    // Pedidos que todavía no llegan, del más antiguo al más nuevo (para las notificaciones)
+    List<Compra> findByEstadoAndFechaPedidoBeforeOrderByFechaPedidoAsc(EstadoCompra estado, LocalDateTime antes);
 
     long countByEstado(EstadoCompra estado);
 

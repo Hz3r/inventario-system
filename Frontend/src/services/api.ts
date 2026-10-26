@@ -28,14 +28,16 @@ export class ApiError extends Error {
     }
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+/** Hace la petición con el token y convierte los errores del backend en ApiError */
+async function enviar(path: string, options: RequestInit = {}): Promise<Response> {
     let res: Response;
     try {
         const token = tokenGuardado();
         res = await fetch(`${API_URL}${path}`, {
             ...options,
             headers: {
-                'Content-Type': 'application/json',
+                // Con FormData (subir archivos) el navegador pone el Content-Type con su "boundary"
+                ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),   // la "pulsera" de la sesión
                 ...options.headers,
             },
@@ -52,13 +54,30 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
         throw new ApiError(401, 'Tu sesión venció. Vuelve a iniciar sesión.');
     }
 
-    if (res.status === 204) return undefined as T;   // DELETE no devuelve cuerpo
-
-    const data = await res.json().catch(() => null);
     if (!res.ok) {
+        const data = await res.json().catch(() => null);
         throw new ApiError(res.status, data?.mensaje ?? `Error ${res.status}`, data?.campos ?? null);
     }
-    return data as T;
+    return res;
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const res = await enviar(path, options);
+    if (res.status === 204) return undefined as T;   // DELETE no devuelve cuerpo
+    return (await res.json().catch(() => null)) as T;
+}
+
+/** Descarga un archivo del backend (con el token) y lo guarda con el nombre indicado */
+async function descargar(path: string, nombreArchivo: string): Promise<void> {
+    const res = await enviar(path);
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export const api = {
@@ -68,4 +87,11 @@ export const api = {
     put: <T>(path: string, body?: unknown) =>
         request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
     delete: (path: string) => request<void>(path, { method: 'DELETE' }),
+    /** Sube un archivo como multipart/form-data */
+    subir: <T>(path: string, campo: string, archivo: File) => {
+        const form = new FormData();
+        form.append(campo, archivo);
+        return request<T>(path, { method: 'POST', body: form });
+    },
+    descargar,
 };

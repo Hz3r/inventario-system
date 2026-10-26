@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { ScanBarcode } from 'lucide-react';
+import { FileSpreadsheet, ScanBarcode } from 'lucide-react';
+import { NotificationBell } from '../notificaciones/NotificationBell';
 import { authService } from '../../services/auth';
 
 interface SidebarProps {
@@ -28,13 +29,14 @@ export function Sidebar({ onLogout }: SidebarProps) {
     return (
         <div className="h-screen w-64 bg-black text-white flex flex-col fixed left-0 top-0 z-50">
             <div className="p-6 border-b border-gray-800 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center border border-gray-500">
+                <div className="w-10 h-10 shrink-0 rounded-full bg-gray-600 flex items-center justify-center border border-gray-500">
                     👤
                 </div>
-                <div>
-                    <p className="text-sm font-bold text-white">{usuario?.nombre ?? 'Usuario'}</p>
-                    <p className="text-xs text-gray-400">{usuario?.email ?? ''}</p>
+                <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-white truncate">{usuario?.nombre ?? 'Usuario'}</p>
+                    <p className="text-xs text-gray-400 truncate">{usuario?.email ?? ''}</p>
                 </div>
+                <NotificationBell />
             </div>
 
             <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -69,6 +71,10 @@ export function Sidebar({ onLogout }: SidebarProps) {
                 <Link to="/fiados" className={getLinkClass('/fiados')}>
                     <img src="/icons/fiados.svg" alt="Fiados" className={getIconClass('/fiados')} />
                     <span>Fiados</span>
+                </Link>
+                <Link to="/importar" className={getLinkClass('/importar')}>
+                    <FileSpreadsheet className="w-5 h-5" />
+                    <span>Importar Excel</span>
                 </Link>
             </nav>
 

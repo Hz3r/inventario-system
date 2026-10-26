@@ -20,6 +20,7 @@ import { Ganancia } from './pages/Ganancia';
 import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
 import { PuntoVenta } from './pages/PuntoVenta';
+import { Importar } from './pages/Importar';
 
 function App() {
     // 1. ESTADO INICIAL LEYENDO EL DISCO DURO DEL NAVEGADOR
@@ -100,6 +101,7 @@ function App() {
                         <Route path="/proveedores" element={<Proveedores />} />
                         <Route path="/fiados" element={<Fiados />} />
                         <Route path="/kardex" element={<Kardex />} />
+                        <Route path="/importar" element={<Importar />} />
                     </Routes>
                 </main>
             </div>

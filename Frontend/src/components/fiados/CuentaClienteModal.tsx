@@ -7,6 +7,7 @@ import { ESTADO_FIADO_LABEL, type CuentaCliente, type FiadoDetalle } from '../..
 import { formatCantidad, formatFechaHora, formatSoles } from '../../utils/formato';
 import { centavos } from '../../utils/dinero';
 import { tienda } from '../../config/tienda';
+import { refrescarNotificaciones } from '../notificaciones/useNotificaciones';
 
 interface Props {
     clienteId: number;
@@ -68,6 +69,7 @@ export function CuentaClienteModal({ clienteId, onClose, onChanged }: Props) {
         setExito(null);
         try {
             const nueva = await fiadosService.abonar(clienteId, montoCent / 100, metodo, referencia.trim() || null);
+            refrescarNotificaciones();
             setCuenta(nueva);
             setExito(`Abono de ${formatSoles(montoCent / 100)} registrado. ` +
                 (nueva.cliente.deudaActual > 0 ? `Ahora debe ${formatSoles(nueva.cliente.deudaActual)}.` : '¡Ya no debe nada! 🎉'));

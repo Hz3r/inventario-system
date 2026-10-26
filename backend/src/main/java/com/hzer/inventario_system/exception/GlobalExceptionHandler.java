@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -70,6 +71,12 @@ public class GlobalExceptionHandler {
         log.warn("Violación de integridad: {}", ex.getMostSpecificCause().getMessage());
         return construir(HttpStatus.CONFLICT,
                 "La operación choca con datos existentes (¿código de barras o RUC repetido?)", null);
+    }
+
+    // El Excel (u otro archivo) pesa más de lo permitido (spring.servlet.multipart.max-file-size)
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> archivoGrande(MaxUploadSizeExceededException ex) {
+        return construir(HttpStatus.CONTENT_TOO_LARGE, "El archivo es muy grande (máximo 10 MB)", null);
     }
 
     @ExceptionHandler(Exception.class)
