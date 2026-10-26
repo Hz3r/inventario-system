@@ -7,6 +7,7 @@ import { inventarioService } from '../services/inventarioService';
 import { ApiError } from '../services/api';
 import { ESTADO_LABEL, type Categoria, type EstadoStock, type Producto } from '../types/inventario';
 import { ProductDetailModal } from '../components/inventory/ProductDetailModal';
+import { CategoriasModal } from '../components/inventory/CategoriasModal';
 
 export function Inventory() {
     const location = useLocation();
@@ -21,6 +22,7 @@ export function Inventory() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
     const [detailProduct, setDetailProduct] = useState<Producto | null>(null);
+    const [isCategoriasOpen, setIsCategoriasOpen] = useState(false);
 
     // Filtros
     const [searchTerm, setSearchTerm] = useState('');
@@ -119,6 +121,12 @@ export function Inventory() {
                 onClose={() => setDetailProduct(null)}
                 onUpdated={(p) => { handleSaved(p); setDetailProduct(p); }}
             />
+            <CategoriasModal
+                isOpen={isCategoriasOpen}
+                onClose={() => setIsCategoriasOpen(false)}
+                categorias={categorias}
+                onChanged={cargar}
+            />
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -128,12 +136,20 @@ export function Inventory() {
                         {!loading && !error && ` · ${products.length} productos`}
                     </p>
                 </div>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="bg-black text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-gray-800 transition flex items-center gap-2"
-                >
-                    <span>+</span> Nuevo Producto
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => setIsCategoriasOpen(true)}
+                        className="bg-white text-gray-800 border border-gray-200 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition"
+                    >
+                        Categorías
+                    </button>
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="bg-black text-white px-6 py-2.5 rounded-xl font-bold shadow-lg hover:bg-gray-800 transition flex items-center gap-2"
+                    >
+                        <span>+</span> Nuevo Producto
+                    </button>
+                </div>
             </div>
 
             {error && (

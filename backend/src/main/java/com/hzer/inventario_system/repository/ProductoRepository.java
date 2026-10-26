@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Modifying;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,4 +44,21 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
         @Lock(LockModeType.PESSIMISTIC_WRITE)
         @Query("SELECT p FROM Producto p WHERE p.id = :id")
         Optional<Producto> findByIdParaActualizar(@Param("id") Long id);
+
+        // Cuántos productos activos tiene cada categoría (una sola consulta para todas)
+        @Query("""
+           SELECT p.categoria.id AS categoriaId, COUNT(p) AS total
+           FROM Producto p
+           WHERE p.activo = true AND p.categoria IS NOT NULL
+           GROUP BY p.categoria.id
+           """)
+        List<ConteoPorCategoria> contarPorCategoria();
+
+        long countByCategoriaIdAndActivoTrue(Long categoriaId);
+
+        // Los productos eliminados (inactivos) se quedan sin categoría para poder borrarla
+        @Modifying
+        @Query("UPDATE Producto p SET p.categoria = null WHERE p.categoria.id = :categoriaId AND p.activo = false")
+        int quitarCategoriaAInactivos(@Param("categoriaId") Long categoriaId);
+
 }

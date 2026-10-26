@@ -11,6 +11,7 @@ export type MotivoAjuste = 'AJUSTE_ENTRADA' | 'AJUSTE_SALIDA' | 'MERMA';
 export interface Categoria {
     id: number;
     nombre: string;
+    productos: number;   // cuántos productos activos tiene
 }
 
 export interface Presentacion {
