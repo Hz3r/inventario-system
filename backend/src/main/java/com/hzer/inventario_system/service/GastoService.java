@@ -26,6 +26,7 @@ public class GastoService {
     private final GastoRepository gastoRepository;
     private final CajaRepository cajaRepository;
     private final UsuarioActualService usuarioActual;
+    private final CajaService cajaService;
 
     public List<GastoResponse> listar(LocalDate desde, LocalDate hasta) {
         return gastoRepository.findByFechaBetweenOrderByFechaDescIdDesc(
@@ -53,6 +54,7 @@ public class GastoService {
             Caja caja = cajaRepository.findFirstByEstado(EstadoCaja.ABIERTA)
                     .orElseThrow(() -> new ReglaNegocioException(
                             "No hay caja abierta. Ábrela, o desmarca \"Salió del cajón\" si lo pagaste con otra plata."));
+            cajaService.validarSalidaDeEfectivo(caja, g.getMonto(), "el gasto");
             g.setCaja(caja);
         }
         return GastoResponse.desde(gastoRepository.save(g));

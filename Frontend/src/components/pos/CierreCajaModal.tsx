@@ -109,6 +109,7 @@ export function CierreCajaModal({ caja, onClose, onCerrada }: Props) {
                                 {formatSoles(caja.montoInicial)} de sencillo + {formatSoles(efectivoVentas)} de ventas en efectivo
                                 {caja.abonosEfectivo > 0 && ` + ${formatSoles(caja.abonosEfectivo)} de abonos de fiados`}
                                 {caja.gastosEfectivo > 0 && ` − ${formatSoles(caja.gastosEfectivo)} de gastos pagados del cajón`}
+                                {caja.comprasEfectivo > 0 && ` − ${formatSoles(caja.comprasEfectivo)} de compras a proveedores`}
                             </p>
                         </div>
 
