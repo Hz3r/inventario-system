@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "productos")
@@ -26,23 +26,32 @@ public class Producto {
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
 
+    @Column(unique = true)
     private String codigoBarras;
 
+    @Column(precision = 10, scale = 2)
     private BigDecimal precioCosto;
 
+    @Column(precision = 10, scale = 2)
     private BigDecimal precioVenta;
 
-    @Column(columnDefinition = "int default 0")
-    private Integer stockInicial = 0;
+    /** Stock en la unidad base (UND, KG o LT). Solo debe cambiar junto con un movimiento de kardex. */
+    @Column(nullable = false, precision = 12, scale = 3)
+    private BigDecimal stockActual = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
-    private UnidadMedida unidadMedida;
+    @Column(nullable = false)
+    private UnidadMedida unidadMedida = UnidadMedida.UND;
 
     private Boolean igv = true;
 
-    private Integer stockMinimo = 5;
+    @Column(precision = 12, scale = 3)
+    private BigDecimal stockMinimo = new BigDecimal("5");
 
-    private LocalDateTime vencimiento;
+    private LocalDate vencimiento;
 
     private String imagenURL;
+
+    @Column(nullable = false)
+    private Boolean activo = true;
 }
