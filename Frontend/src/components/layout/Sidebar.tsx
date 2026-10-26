@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { ScanBarcode } from 'lucide-react';
 
 interface SidebarProps {
     onLogout: () => void;
@@ -38,6 +39,10 @@ export function Sidebar({ onLogout }: SidebarProps) {
                 <Link to="/" className={getLinkClass('/')}>
                     <img src="/icons/dashboard.svg" alt="Tablero" className={getIconClass('/')} />
                     <span>Tablero</span>
+                </Link>
+                <Link to="/pos" className={getLinkClass('/pos')}>
+                    <ScanBarcode className="w-5 h-5" />
+                    <span>Punto de Venta</span>
                 </Link>
                 <Link to="/ventas" className={getLinkClass('/ventas')}>
                     <img src="/icons/ventas.svg" alt="Ventas" className={getIconClass('/ventas')} />
