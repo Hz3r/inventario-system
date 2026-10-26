@@ -71,7 +71,8 @@ export function ProductTable({ products, loading, onDelete, onEdit, onManage }: 
                                             {p.presentaciones.length > 0 && (
                                                 <div className="flex flex-wrap gap-1 mt-1">
                                                     {p.presentaciones.map((pr) => (
-                                                        <span key={pr.id} className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md">
+                                                        <span key={pr.id} title={pr.codigoBarras ? `Código: ${pr.codigoBarras}` : 'Sin código de barras'}
+                                                              className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md cursor-help">
                                                             {pr.nombre} · {formatSoles(pr.precioVenta)}
                                                         </span>
                                                     ))}
