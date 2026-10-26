@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { authService } from './services/auth';
 import { EVENTO_SESION_EXPIRADA } from './services/api';
+import { cargarTienda } from './config/tienda';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // Componentes
@@ -44,6 +45,11 @@ function App() {
         setIsAuthenticated(false);
         authService.logout(); // Borramos el token de este navegador
     };
+
+    // Con la sesión iniciada, traemos los datos de la bodega (para el ticket)
+    useEffect(() => {
+        if (isAuthenticated) cargarTienda();
+    }, [isAuthenticated]);
 
     // Si el backend responde 401 (token vencido), volvemos al login
     useEffect(() => {

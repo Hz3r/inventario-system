@@ -6,7 +6,7 @@ import { METODO_LABEL, type MetodoPago } from '../../types/pos';
 import { ESTADO_FIADO_LABEL, type CuentaCliente, type FiadoDetalle } from '../../types/fiados';
 import { formatCantidad, formatFechaHora, formatSoles } from '../../utils/formato';
 import { centavos } from '../../utils/dinero';
-import { TIENDA } from '../../config/tienda';
+import { tienda } from '../../config/tienda';
 
 interface Props {
     clienteId: number;
@@ -85,7 +85,7 @@ export function CuentaClienteModal({ clienteId, onClose, onChanged }: Props) {
     const telefono = cuenta?.cliente.telefono?.replace(/\D/g, '') ?? '';
     const linkWhatsapp = telefono.length >= 9
         ? `https://wa.me/51${telefono.slice(-9)}?text=${encodeURIComponent(
-            `Hola ${cuenta?.cliente.nombre}, te saluda ${TIENDA.nombre}. Tu cuenta pendiente es de ${formatSoles(deuda)}. ¡Gracias!`)}`
+            `Hola ${cuenta?.cliente.nombre}, te saluda ${tienda().nombre}. Tu cuenta pendiente es de ${formatSoles(deuda)}. ¡Gracias!`)}`
         : null;
 
     const fiados = cuenta?.fiados ?? [];
