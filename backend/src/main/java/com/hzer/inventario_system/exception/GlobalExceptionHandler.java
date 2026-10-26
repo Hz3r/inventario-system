@@ -1,5 +1,6 @@
 package com.hzer.inventario_system.exception;
 
+import com.hzer.inventario_system.seguridad.CredencialesInvalidasException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -25,6 +26,11 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(CredencialesInvalidasException.class)
+    public ResponseEntity<ApiError> credenciales(CredencialesInvalidasException ex) {
+        return construir(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
+    }
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ResponseEntity<ApiError> noEncontrado(RecursoNoEncontradoException ex) {

@@ -12,7 +12,6 @@ import java.time.ZoneId;
 @RestController
 @RequestMapping("/api/ganancia")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 public class GananciaController {
 
     private final GananciaService gananciaService;

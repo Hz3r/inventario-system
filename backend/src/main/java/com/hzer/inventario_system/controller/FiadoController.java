@@ -16,7 +16,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/fiados")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 public class FiadoController {
 
     private final FiadoService fiadoService;

@@ -22,6 +22,7 @@ public class DataInitializer implements CommandLineRunner {
 
             Usuario admin = new Usuario();
             admin.setEmail("admin@tienda.com");
+            admin.setNombre("Administrador");
 
             String passwordEncriptada = passwordEncoder.encode("123456");
             admin.setPassword(passwordEncriptada);

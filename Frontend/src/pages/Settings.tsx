@@ -1,5 +1,6 @@
 // src/pages/Settings.tsx
 import { useState } from 'react';
+import { SeguridadTab } from '../components/settings/SeguridadTab';
 
 export function Settings() {
     // Estado para controlar qué pestaña está activa
@@ -127,28 +128,7 @@ export function Settings() {
                 )}
 
                 {/* --- PESTAÑA: SEGURIDAD --- */}
-                {activeTab === 'seguridad' && (
-                    <div className="space-y-6 animate-fade-in-up">
-                        <h2 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-3">Datos del Administrador</h2>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre y Apellido</label>
-                                <input type="text" defaultValue="Gerente" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-black outline-none transition" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Correo Electrónico</label>
-                                <input type="email" defaultValue="admin@grocery.co" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-black outline-none transition" />
-                            </div>
-                        </div>
-
-                        <div className="pt-4">
-                            <button className="bg-white border border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-bold hover:bg-gray-50 transition shadow-sm">
-                                Cambiar Contraseña
-                            </button>
-                        </div>
-                    </div>
-                )}
+                {activeTab === 'seguridad' && <SeguridadTab />}
 
                 {/* BOTÓN DE GUARDAR GENERAL */}
                 <div className="mt-10 flex justify-end pt-6 border-t border-gray-100">

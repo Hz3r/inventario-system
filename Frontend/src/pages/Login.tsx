@@ -1,5 +1,7 @@
 // src/pages/Login.tsx
 import { useState } from 'react';
+import { authService } from '../services/auth';
+import { ApiError } from '../services/api';
 
 interface LoginProps {
     onLoginSuccess: () => void;
@@ -17,23 +19,10 @@ export function Login({ onLoginSuccess }: LoginProps) {
         setLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                onLoginSuccess();
-            } else {
-                setError(data.error || 'Credenciales incorrectas');
-            }
-        } catch {
-            setError('No se pudo conectar al servidor. Verifica que el backend esté corriendo.');
+            await authService.login(email.trim(), password);
+            onLoginSuccess();
+        } catch (err) {
+            setError(err instanceof ApiError ? err.message : 'No se pudo conectar al servidor. Verifica que el backend esté corriendo.');
         } finally {
             setLoading(false);
         }
