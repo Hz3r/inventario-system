@@ -17,7 +17,8 @@ public record CajaResponse(
         BigDecimal totalVendido,                 // suma de todos los métodos
         Map<MetodoPago, BigDecimal> porMetodo,   // EFECTIVO: 320.50, YAPE: 150.00, FIADO: 30.00
         BigDecimal abonosEfectivo,               // abonos de fiados cobrados en efectivo en esta caja
-        BigDecimal efectivoEsperado,             // monto inicial + ventas en efectivo + abonos en efectivo
+        BigDecimal gastosEfectivo,               // gastos pagados con plata del cajón
+        BigDecimal efectivoEsperado,             // inicial + ventas en efectivo + abonos − gastos del cajón
         BigDecimal montoContado,                 // solo si está cerrada
         BigDecimal diferencia,                   // contado − esperado
         String nota

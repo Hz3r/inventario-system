@@ -21,5 +21,8 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
 
     List<Venta> findByCajaIdOrderByFechaDesc(Long cajaId);
 
+    // Ventas de un periodo en un estado (para calcular la ganancia)
+    List<Venta> findByFechaBetweenAndEstado(LocalDateTime desde, LocalDateTime hasta, EstadoVenta estado);
+
     long countByCajaIdAndEstado(Long cajaId, EstadoVenta estado);
 }
