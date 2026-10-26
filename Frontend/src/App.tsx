@@ -16,6 +16,7 @@ import { Ventas } from './pages/Ventas';
 import { Ganancia } from './pages/Ganancia';
 import { Settings } from './pages/Settings';
 import { Login } from './pages/Login';
+import { PuntoVenta } from './pages/PuntoVenta';
 
 function App() {
     // 1. ESTADO INICIAL LEYENDO EL DISCO DURO DEL NAVEGADOR
@@ -74,6 +75,7 @@ function App() {
                                 <Dashboard />
                             </>
                         } />
+                        <Route path="/pos" element={<PuntoVenta />} />
                         <Route path="/inventario" element={<Inventory />} />
                         <Route path="/ventas" element={<Ventas />} />
                         <Route path="/ganancia" element={<Ganancia />} />
