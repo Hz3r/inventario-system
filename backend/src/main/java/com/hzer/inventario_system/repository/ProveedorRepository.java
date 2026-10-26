@@ -12,4 +12,6 @@ public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
 
     // Para no registrar dos veces el mismo RUC
     boolean existsByRuc(String ruc);
+
+    boolean existsByRucAndIdNot(String ruc, Long id);
 }

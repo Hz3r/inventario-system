@@ -5,12 +5,15 @@ import com.hzer.inventario_system.dto.CajaResponse;
 import com.hzer.inventario_system.dto.CerrarCajaRequest;
 import com.hzer.inventario_system.entities.Caja;
 import com.hzer.inventario_system.entities.EstadoCaja;
+import com.hzer.inventario_system.entities.MetodoPagoCompra;
+import com.hzer.inventario_system.entities.EstadoCompra;
 import com.hzer.inventario_system.entities.EstadoVenta;
 import com.hzer.inventario_system.entities.MetodoPago;
 import com.hzer.inventario_system.exception.RecursoNoEncontradoException;
 import com.hzer.inventario_system.exception.ReglaNegocioException;
 import com.hzer.inventario_system.repository.AbonoRepository;
 import com.hzer.inventario_system.repository.CajaRepository;
+import com.hzer.inventario_system.repository.CompraRepository;
 import com.hzer.inventario_system.repository.GastoRepository;
 import com.hzer.inventario_system.repository.TotalPorMetodo;
 import com.hzer.inventario_system.repository.VentaPagoRepository;
@@ -40,6 +43,7 @@ public class CajaService {
     private final VentaPagoRepository ventaPagoRepository;
     private final AbonoRepository abonoRepository;
     private final GastoRepository gastoRepository;
+    private final CompraRepository compraRepository;
     private final UsuarioActualService usuarioActual;
 
     /** La caja abierta ahora mismo, si hay una */
@@ -51,6 +55,18 @@ public class CajaService {
     public Caja cajaAbiertaObligatoria() {
         return cajaRepository.findFirstByEstado(EstadoCaja.ABIERTA)
                 .orElseThrow(() -> new ReglaNegocioException("No hay una caja abierta. Abre la caja antes de vender."));
+    }
+
+    /**
+     * Valida que del cajón pueda salir ese monto (gastos o compras pagados "del cajón").
+     * No puedes sacar S/ 144 si en el cajón solo debería haber S/ 57.
+     */
+    public void validarSalidaDeEfectivo(Caja caja, BigDecimal monto, String concepto) {
+        BigDecimal disponible = resumen(caja).efectivoEsperado();
+        if (monto.compareTo(disponible) > 0) {
+            throw new ReglaNegocioException("En el cajón solo debería haber S/ " + disponible + " y " + concepto
+                    + " es de S/ " + monto + ". Si lo pagaste con otra plata, desmarca \"Salió del cajón\".");
+        }
     }
 
     public CajaResponse obtener(Long id) {
@@ -108,14 +124,18 @@ public class CajaService {
         // Gastos pagados con plata del cajón (luz, delivery...): salieron de la caja
         BigDecimal gastosEfectivo = gastoRepository.sumaPorCajaYMetodo(c.getId(), MetodoPago.EFECTIVO);
 
+        // Compras a proveedores pagadas con plata del cajón
+        BigDecimal comprasEfectivo = compraRepository.sumaPorCaja(c.getId(), MetodoPagoCompra.EFECTIVO, EstadoCompra.RECIBIDO);
+
         BigDecimal esperado = (c.getEstado() == EstadoCaja.CERRADA && c.getMontoEsperado() != null)
-                ? c.getMontoEsperado()                                                   // cerrada: queda congelado
-                : c.getMontoInicial().add(efectivo).add(abonosEfectivo).subtract(gastosEfectivo);   // abierta: en vivo
+                ? c.getMontoEsperado()                                     // cerrada: queda congelado
+                : c.getMontoInicial().add(efectivo).add(abonosEfectivo)    // abierta: se calcula en vivo
+                    .subtract(gastosEfectivo).subtract(comprasEfectivo);
 
         long cantidad = ventaRepository.countByCajaIdAndEstado(c.getId(), EstadoVenta.COMPLETADA);
 
         return new CajaResponse(c.getId(), c.getEstado(), c.getAbiertaEn(), c.getCerradaEn(),
-                c.getMontoInicial(), cantidad, totalVendido, porMetodo, abonosEfectivo, gastosEfectivo, esperado,
+                c.getMontoInicial(), cantidad, totalVendido, porMetodo, abonosEfectivo, gastosEfectivo, comprasEfectivo, esperado,
                 c.getMontoContado(), c.getDiferencia(), c.getNota());
     }
 

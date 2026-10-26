@@ -40,6 +40,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/fiados/**").permitAll()   // TEMPORAL hasta tener JWT
                         .requestMatchers("/api/gastos/**").permitAll()   // TEMPORAL hasta tener JWT
                         .requestMatchers("/api/ganancia/**").permitAll() // TEMPORAL hasta tener JWT
+                        .requestMatchers("/api/proveedores/**").permitAll() // TEMPORAL hasta tener JWT
+                        .requestMatchers("/api/compras/**").permitAll()     // TEMPORAL hasta tener JWT
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 );
