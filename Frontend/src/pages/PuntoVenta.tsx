@@ -8,6 +8,7 @@ import { UNIDAD_CORTA, type Presentacion, type Producto } from '../types/inventa
 import type { Caja, LineaCarrito, Venta, VentaItemRequest } from '../types/pos';
 import { formatCantidad, formatFechaHora, formatSoles } from '../utils/formato';
 import { centavos, subtotalLineaCent } from '../utils/dinero';
+import { imprimirTicket } from '../utils/ticket';
 import { CobroModal } from '../components/pos/CobroModal';
 import { CierreCajaModal } from '../components/pos/CierreCajaModal';
 
@@ -50,6 +51,15 @@ export function PuntoVenta() {
     const [ultimaVenta, setUltimaVenta] = useState<Venta | null>(null);
     const [cobrando, setCobrando] = useState(false);
     const [cerrandoCaja, setCerrandoCaja] = useState(false);
+    // Preferencia de ESTA computadora (la caja con impresora la deja activada)
+    const [autoImprimir, setAutoImprimir] = useState<boolean>(() => {
+        try { return localStorage.getItem('pos_auto_imprimir') === 'true'; } catch { return false; }
+    });
+
+    const cambiarAutoImprimir = (valor: boolean) => {
+        setAutoImprimir(valor);
+        try { localStorage.setItem('pos_auto_imprimir', String(valor)); } catch { /* sin almacenamiento: solo dura la sesión */ }
+    };
 
     const enfocarBuscador = () => setTimeout(() => inputRef.current?.focus(), 0);
 
@@ -208,6 +218,7 @@ export function PuntoVenta() {
     const ventaTerminada = (venta: Venta) => {
         setCobrando(false);
         setUltimaVenta(venta);
+        if (autoImprimir) imprimirTicket(venta);
         setCarrito([]);
         setDescuentoGeneral('');
         cargarCaja();        // actualiza "N ventas · S/ total"
@@ -318,6 +329,12 @@ export function PuntoVenta() {
                                 <> · <b>Vuelto {formatSoles(ultimaVenta.vuelto)}</b></>
                             )}
                             {ultimaVenta.clienteNombre && <> · Cliente: {ultimaVenta.clienteNombre}</>}
+                            <button
+                                onClick={() => { imprimirTicket(ultimaVenta); enfocarBuscador(); }}
+                                className="ml-3 px-3 py-1 rounded-lg bg-white border border-green-300 text-green-800 font-bold hover:bg-green-100"
+                            >
+                                Imprimir ticket
+                            </button>
                         </div>
                     )}
 
@@ -471,6 +488,15 @@ export function PuntoVenta() {
                         >
                             Cobrar <span className="text-sm font-medium opacity-60">(F2)</span>
                         </button>
+                        <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                checked={autoImprimir}
+                                onChange={(e) => cambiarAutoImprimir(e.target.checked)}
+                                className="w-4 h-4 accent-black"
+                            />
+                            Imprimir ticket automáticamente al cobrar
+                        </label>
                         {carrito.length > 0 && (
                             <button onClick={vaciar} className="w-full text-sm font-bold text-gray-500 hover:text-red-600">
                                 Vaciar carrito
