@@ -1,0 +1,40 @@
+=====================================================================
+  INSTALACION DEL SISTEMA DE LA BODEGA EN LA MINI PC (Windows 10/11)
+=====================================================================
+
+ANTES (una sola vez, con internet):
+
+ 1. Windows actualizado (Windows Update hasta que no pida mas).
+ 2. Google Chrome:  https://www.google.com/chrome
+ 3. Java 21 (Temurin):  https://adoptium.net  -> "Temurin 21 LTS" -> .msi
+      En el instalador marca "Add to PATH" y "Set JAVA_HOME".
+ 4. PostgreSQL 17:  https://www.postgresql.org/download/windows  (instalador EDB)
+      - Deja el puerto 5432.
+      - Pon una contrasena para "postgres" y ANOTALA (se pide en el paso 6).
+      - Al final NO hace falta "Stack Builder".
+ 5. Drivers de la ticketera y del escaner (el escaner suele funcionar sin driver).
+      En la ticketera: Propiedades -> Preferencias -> papel 80 mm (o 58 mm),
+      y ponla como IMPRESORA PREDETERMINADA.
+
+INSTALAR:
+
+ 6. Copia esta carpeta a la mini PC.
+    Clic derecho en INSTALAR.bat -> "Ejecutar como administrador".
+    Te pide la contrasena de "postgres". Al final dice INSTALADO.
+
+USAR:
+
+ 7. Abre el acceso "Bodega" del escritorio.
+    Usuario: admin@tienda.com   Clave: 123456  -> cambiala en Configuraciones.
+    En Configuraciones llena los datos de la bodega y el ancho del ticket.
+
+ - El servidor arranca solo cada vez que se prende la PC.
+ - Desde el celular (mismo WiFi): http://IP-DE-LA-MINI-PC:8080
+ - Respaldo automatico todos los dias 10:00 pm en C:\Bodega\respaldos
+   (copialos a un USB o a Drive cada cierto tiempo).
+ - Si algo falla: C:\Bodega\logs\servidor.log
+
+ACTUALIZAR A UNA VERSION NUEVA:
+   Copia la carpeta nueva y vuelve a ejecutar INSTALAR.bat como administrador.
+   Los datos y la configuracion se conservan.
+=====================================================================
