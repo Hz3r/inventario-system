@@ -13,7 +13,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/inventory/kardex")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 public class KardexController {
 
     private final KardexService kardexService;

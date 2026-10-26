@@ -4,4 +4,6 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // host: true → también se puede abrir desde otro equipo de la red (http://IP-de-esta-PC:5173)
+  server: { host: true },
 })

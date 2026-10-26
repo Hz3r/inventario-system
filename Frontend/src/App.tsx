@@ -1,5 +1,7 @@
 // src/App.tsx
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { authService } from './services/auth';
+import { EVENTO_SESION_EXPIRADA } from './services/api';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // Componentes
@@ -21,7 +23,7 @@ import { PuntoVenta } from './pages/PuntoVenta';
 function App() {
     // 1. ESTADO INICIAL LEYENDO EL DISCO DURO DEL NAVEGADOR
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
-        return localStorage.getItem('sesionIniciada') === 'true';
+        return authService.estaLogueado();
     });
 
     const [isSplashVisible, setIsSplashVisible] = useState(false);
@@ -33,16 +35,25 @@ function App() {
         setTimeout(() => {
             setIsSplashVisible(false);
             setIsAuthenticated(true);
-            // 2. GUARDAMOS LA SESIÓN
-            localStorage.setItem('sesionIniciada', 'true');
+            // 2. El token ya quedó guardado por authService.login()
         }, 2000);
     };
 
     // 3. FUNCIÓN DE CERRAR SESIÓN (LOGOUT)
     const handleLogout = () => {
         setIsAuthenticated(false);
-        localStorage.removeItem('sesionIniciada'); // Borramos la sesión
+        authService.logout(); // Borramos el token de este navegador
     };
+
+    // Si el backend responde 401 (token vencido), volvemos al login
+    useEffect(() => {
+        const alExpirar = () => {
+            authService.logout();
+            setIsAuthenticated(false);
+        };
+        window.addEventListener(EVENTO_SESION_EXPIRADA, alExpirar);
+        return () => window.removeEventListener(EVENTO_SESION_EXPIRADA, alExpirar);
+    }, []);
 
     if (isSplashVisible) {
         return <SplashScreen />;

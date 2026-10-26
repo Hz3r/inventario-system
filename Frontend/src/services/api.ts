@@ -1,8 +1,19 @@
 // src/services/api.ts
 // Único lugar que sabe DÓNDE está el backend y CÓMO hablarle.
 
-// En tu PC usa localhost; en Railway se configura VITE_API_URL al construir
-const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8080';
+// Por defecto el backend está en la MISMA máquina que sirve la página, puerto 8080.
+// Así funciona en la PC de la bodega (localhost) y desde el celular en el WiFi (192.168.x.x).
+// En Railway se configura VITE_API_URL al construir.
+const API_URL: string = import.meta.env.VITE_API_URL ?? `${window.location.protocol}//${window.location.hostname}:8080`;
+
+const CLAVE_TOKEN = 'auth_token';
+
+function tokenGuardado(): string | null {
+    try { return localStorage.getItem(CLAVE_TOKEN); } catch { return null; }
+}
+
+/** Aviso global: App.tsx lo escucha y vuelve a la pantalla de login */
+export const EVENTO_SESION_EXPIRADA = 'sesion-expirada';
 
 /** Error que devuelve nuestro backend (GlobalExceptionHandler → ApiError) */
 export class ApiError extends Error {
@@ -20,13 +31,25 @@ export class ApiError extends Error {
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     let res: Response;
     try {
+        const token = tokenGuardado();
         res = await fetch(`${API_URL}${path}`, {
             ...options,
-            headers: { 'Content-Type': 'application/json', ...options.headers },
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),   // la "pulsera" de la sesión
+                ...options.headers,
+            },
         });
     } catch {
         // El fetch falla solo si no hay conexión (backend apagado, sin red...)
         throw new ApiError(0, 'No se pudo conectar con el servidor. ¿Está corriendo el backend?');
+    }
+
+    // 401 fuera del login = el token venció o es inválido → volver a pedir la contraseña
+    if (res.status === 401 && !path.startsWith('/api/auth/login')) {
+        try { localStorage.removeItem(CLAVE_TOKEN); } catch { /* nada */ }
+        window.dispatchEvent(new Event(EVENTO_SESION_EXPIRADA));
+        throw new ApiError(401, 'Tu sesión venció. Vuelve a iniciar sesión.');
     }
 
     if (res.status === 204) return undefined as T;   // DELETE no devuelve cuerpo

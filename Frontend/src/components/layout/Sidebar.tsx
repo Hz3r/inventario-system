@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { ScanBarcode } from 'lucide-react';
+import { authService } from '../../services/auth';
 
 interface SidebarProps {
     onLogout: () => void;
@@ -7,6 +8,7 @@ interface SidebarProps {
 
 export function Sidebar({ onLogout }: SidebarProps) {
     const location = useLocation();
+    const usuario = authService.usuario();
     const isActive = (path: string) => location.pathname === path;
 
     const getLinkClass = (path: string) =>
@@ -30,8 +32,8 @@ export function Sidebar({ onLogout }: SidebarProps) {
                     👤
                 </div>
                 <div>
-                    <p className="text-sm font-bold text-white">Gerente</p>
-                    <p className="text-xs text-gray-400">admin@grocery.co</p>
+                    <p className="text-sm font-bold text-white">{usuario?.nombre ?? 'Usuario'}</p>
+                    <p className="text-xs text-gray-400">{usuario?.email ?? ''}</p>
                 </div>
             </div>
 
