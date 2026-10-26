@@ -1,12 +1,14 @@
 // src/components/inventory/ProductTable.tsx
 import { ESTADO_LABEL, UNIDAD_CORTA, type Producto } from '../../types/inventario';
 import { formatCantidad, formatSoles } from '../../utils/formato';
+import { SlidersHorizontal } from 'lucide-react';
 
 interface ProductTableProps {
     products: Producto[];
     loading: boolean;
     onDelete: (producto: Producto) => void;
     onEdit: (producto: Producto) => void;
+    onManage: (producto: Producto) => void;
 }
 
 const ESTADO_CLASES = {
@@ -15,7 +17,7 @@ const ESTADO_CLASES = {
     SIN_STOCK: 'bg-red-50 text-red-700 border-red-200',
 } as const;
 
-export function ProductTable({ products, loading, onDelete, onEdit }: ProductTableProps) {
+export function ProductTable({ products, loading, onDelete, onEdit, onManage }: ProductTableProps) {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
@@ -107,6 +109,9 @@ export function ProductTable({ products, loading, onDelete, onEdit }: ProductTab
                                         </button>
                                         <button onClick={() => onDelete(p)} className="opacity-40 hover:opacity-100 hover:brightness-0 transition-all" title="Eliminar">
                                             <img src="/icons/trash.svg" alt="Eliminar" className="w-5 h-5" />
+                                        </button>
+                                        <button onClick={() => onManage(p)} className="text-gray-400 hover:text-black transition" title="Presentaciones, ajustes y kardex">
+                                            <SlidersHorizontal className="w-5 h-5" />
                                         </button>
                                     </div>
                                 </td>

@@ -6,6 +6,7 @@ import { ProductModal } from '../components/inventory/ProductModal';
 import { inventarioService } from '../services/inventarioService';
 import { ApiError } from '../services/api';
 import { ESTADO_LABEL, type Categoria, type EstadoStock, type Producto } from '../types/inventario';
+import { ProductDetailModal } from '../components/inventory/ProductDetailModal';
 
 export function Inventory() {
     const location = useLocation();
@@ -19,6 +20,7 @@ export function Inventory() {
     // Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
+    const [detailProduct, setDetailProduct] = useState<Producto | null>(null);
 
     // Filtros
     const [searchTerm, setSearchTerm] = useState('');
@@ -112,6 +114,11 @@ export function Inventory() {
                 productToEdit={editingProduct}
                 categorias={categorias}
             />
+            <ProductDetailModal
+                producto={detailProduct}
+                onClose={() => setDetailProduct(null)}
+                onUpdated={(p) => { handleSaved(p); setDetailProduct(p); }}
+            />
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -184,6 +191,7 @@ export function Inventory() {
                 loading={loading}
                 onDelete={handleDelete}
                 onEdit={handleEdit}
+                onManage={setDetailProduct}
             />
         </div>
     );
