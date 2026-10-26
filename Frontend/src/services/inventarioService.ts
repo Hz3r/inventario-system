@@ -52,4 +52,10 @@ export const inventarioService = {
 
     // ---- Categorías ----
     listarCategorias: () => api.get<Categoria[]>('/api/categorias'),
+
+    crearCategoria: (nombre: string) => api.post<Categoria>('/api/categorias', { nombre }),
+
+    renombrarCategoria: (id: number, nombre: string) => api.put<Categoria>(`/api/categorias/${id}`, { nombre }),
+
+    eliminarCategoria: (id: number) => api.delete(`/api/categorias/${id}`),
 };

@@ -8,3 +8,5 @@ target/
 .env.*
 .DS_Store
 Thumbs.db
+# Archivos temporales de TypeScript
+*.tsbuildinfo
