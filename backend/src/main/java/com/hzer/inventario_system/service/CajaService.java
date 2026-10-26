@@ -11,6 +11,7 @@ import com.hzer.inventario_system.exception.RecursoNoEncontradoException;
 import com.hzer.inventario_system.exception.ReglaNegocioException;
 import com.hzer.inventario_system.repository.AbonoRepository;
 import com.hzer.inventario_system.repository.CajaRepository;
+import com.hzer.inventario_system.repository.GastoRepository;
 import com.hzer.inventario_system.repository.TotalPorMetodo;
 import com.hzer.inventario_system.repository.VentaPagoRepository;
 import com.hzer.inventario_system.repository.VentaRepository;
@@ -38,6 +39,7 @@ public class CajaService {
     private final VentaRepository ventaRepository;
     private final VentaPagoRepository ventaPagoRepository;
     private final AbonoRepository abonoRepository;
+    private final GastoRepository gastoRepository;
     private final UsuarioActualService usuarioActual;
 
     /** La caja abierta ahora mismo, si hay una */
@@ -103,15 +105,17 @@ public class CajaService {
         // Abonos de fiados cobrados en efectivo: también están en el cajón
         BigDecimal abonosEfectivo = abonoRepository.sumaPorCajaYMetodo(c.getId(), MetodoPago.EFECTIVO);
 
-        // TODO (módulo de gastos): − gastos pagados con plata de la caja
+        // Gastos pagados con plata del cajón (luz, delivery...): salieron de la caja
+        BigDecimal gastosEfectivo = gastoRepository.sumaPorCajaYMetodo(c.getId(), MetodoPago.EFECTIVO);
+
         BigDecimal esperado = (c.getEstado() == EstadoCaja.CERRADA && c.getMontoEsperado() != null)
-                ? c.getMontoEsperado()                                     // cerrada: queda congelado
-                : c.getMontoInicial().add(efectivo).add(abonosEfectivo);   // abierta: se calcula en vivo
+                ? c.getMontoEsperado()                                                   // cerrada: queda congelado
+                : c.getMontoInicial().add(efectivo).add(abonosEfectivo).subtract(gastosEfectivo);   // abierta: en vivo
 
         long cantidad = ventaRepository.countByCajaIdAndEstado(c.getId(), EstadoVenta.COMPLETADA);
 
         return new CajaResponse(c.getId(), c.getEstado(), c.getAbiertaEn(), c.getCerradaEn(),
-                c.getMontoInicial(), cantidad, totalVendido, porMetodo, abonosEfectivo, esperado,
+                c.getMontoInicial(), cantidad, totalVendido, porMetodo, abonosEfectivo, gastosEfectivo, esperado,
                 c.getMontoContado(), c.getDiferencia(), c.getNota());
     }
 

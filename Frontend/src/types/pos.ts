@@ -25,6 +25,7 @@ export interface Caja {
     totalVendido: number;
     porMetodo: Partial<Record<MetodoPago, number>>;   // { EFECTIVO: 80, YAPE: 28 }
     abonosEfectivo: number;                           // abonos de fiados cobrados en efectivo
+    gastosEfectivo: number;                           // gastos pagados con plata del cajón
     efectivoEsperado: number;
     montoContado: number | null;
     diferencia: number | null;
