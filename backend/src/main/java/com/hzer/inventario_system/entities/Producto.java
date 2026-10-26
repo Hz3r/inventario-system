@@ -2,7 +2,8 @@ package com.hzer.inventario_system.entities;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
@@ -10,7 +11,8 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "productos")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Producto {
@@ -25,6 +27,10 @@ public class Producto {
     @ManyToOne
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
+
+    @ManyToOne
+    @JoinColumn(name = "proveedor_id")
+    private Proveedor proveedor;
 
     @Column(unique = true)
     private String codigoBarras;
