@@ -28,10 +28,11 @@ public class ProductoService {
         producto.setCodigoBarras(request.getCodigoBarras());
         producto.setPrecioCosto(request.getPrecioCosto());
         producto.setPrecioVenta(request.getPrecioVenta());
-        producto.setStockInicial(request.getStockInicial());
-        producto.setUnidadMedida(request.getUnidadMedida());
+        // TODO(kardex): registrar un movimiento INICIAL cuando exista el módulo de kardex
+        producto.setStockActual(request.getStockInicial() != null ? request.getStockInicial() : java.math.BigDecimal.ZERO);
+        if (request.getUnidadMedida() != null) producto.setUnidadMedida(request.getUnidadMedida());
         producto.setIgv(request.getIgv());
-        producto.setStockMinimo(request.getStockMinimo());
+        if (request.getStockMinimo() != null) producto.setStockMinimo(request.getStockMinimo());
         producto.setVencimiento(request.getVencimiento());
         producto.setImagenURL(request.getImagenURL());
 

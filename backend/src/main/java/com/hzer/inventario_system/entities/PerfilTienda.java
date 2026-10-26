@@ -8,7 +8,6 @@ public class PerfilTienda {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Lob
     private byte[] logo;
 
     private String nombre;

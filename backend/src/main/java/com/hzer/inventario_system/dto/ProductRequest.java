@@ -4,7 +4,7 @@ import com.hzer.inventario_system.entities.UnidadMedida;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 public class ProductRequest {
@@ -17,15 +17,16 @@ public class ProductRequest {
 
     private BigDecimal precioVenta;
 
-    private Integer stockInicial;
+    /** Stock con el que se registra el producto (en unidad base). */
+    private BigDecimal stockInicial;
 
     private UnidadMedida unidadMedida;
 
     private Boolean igv;
 
-    private Integer stockMinimo;
+    private BigDecimal stockMinimo;
 
-    private LocalDateTime vencimiento;
+    private LocalDate vencimiento;
 
     private String imagenURL;
 
