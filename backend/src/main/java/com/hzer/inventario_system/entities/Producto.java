@@ -35,6 +35,10 @@ public class Producto {
     @Column(unique = true)
     private String codigoBarras;
 
+    /** Código del producto en la balanza (PLU), sin ceros a la izquierda. Ver EtiquetaBalanza */
+    @Column(length = 6, unique = true)
+    private String plu;
+
     @Column(precision = 10, scale = 2)
     private BigDecimal precioCosto;
 

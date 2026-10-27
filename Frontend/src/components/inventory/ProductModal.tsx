@@ -19,6 +19,7 @@ interface ProductModalProps {
 interface FormState {
     nombre: string;
     codigoBarras: string;
+    plu: string;
     categoriaId: string;
     precioCosto: string;
     precioVenta: string;
@@ -31,7 +32,7 @@ interface FormState {
 }
 
 const VACIO: FormState = {
-    nombre: '', codigoBarras: '', categoriaId: '', precioCosto: '', precioVenta: '',
+    nombre: '', codigoBarras: '', plu: '', categoriaId: '', precioCosto: '', precioVenta: '',
     stockInicial: '', stockMinimo: '5', unidadMedida: 'UND', igv: true, vencimiento: '', imagenURL: '',
 };
 
@@ -77,6 +78,7 @@ export function ProductModal({ isOpen, onClose, onSaved, productToEdit, categori
         setForm(productToEdit ? {
             nombre: productToEdit.nombre,
             codigoBarras: productToEdit.codigoBarras ?? '',
+            plu: productToEdit.plu ?? '',
             categoriaId: aTexto(productToEdit.categoriaId),
             precioCosto: aTexto(productToEdit.precioCosto),
             precioVenta: aTexto(productToEdit.precioVenta),
@@ -107,6 +109,7 @@ export function ProductModal({ isOpen, onClose, onSaved, productToEdit, categori
         const data: ProductoRequest = {
             nombre: form.nombre,
             codigoBarras: form.codigoBarras.trim() || null,
+            plu: form.plu.trim() || null,
             precioCosto: aNumero(form.precioCosto),
             precioVenta: aNumero(form.precioVenta) as number,
             stockInicial: editando ? null : aNumero(form.stockInicial),
@@ -238,6 +241,15 @@ export function ProductModal({ isOpen, onClose, onSaved, productToEdit, categori
                                    onWheel={(e) => e.currentTarget.blur()} placeholder="5" className={inputCls(errores.stockMinimo)} />
                         </Campo>
                     </div>
+
+                    {(form.unidadMedida !== 'UND' || form.plu) && (
+                        <Campo label="PLU de la balanza (Opcional)" error={errores.plu}
+                               ayuda="El número con el que registraste este producto en la balanza que imprime etiquetas. Al escanear la etiqueta se reconoce el producto y su peso.">
+                            <input type="text" inputMode="numeric" maxLength={6} value={form.plu}
+                                   onChange={(e) => set('plu', e.target.value.replace(/\D/g, ''))}
+                                   placeholder="Ej: 123" className={`${inputCls(errores.plu)} font-mono`} />
+                        </Campo>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <Campo label="Vencimiento (Opcional)" error={errores.vencimiento}>

@@ -5,6 +5,7 @@ import com.hzer.inventario_system.dto.PerfilTiendaResponse;
 import com.hzer.inventario_system.entities.PerfilTienda;
 import com.hzer.inventario_system.exception.ReglaNegocioException;
 import com.hzer.inventario_system.repository.PerfilTiendaRepository;
+import com.hzer.inventario_system.util.EtiquetaBalanza;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +42,28 @@ public class ConfiguracionService {
         perfil.setAnchoTicket(ancho);
         perfil.setLogo(decodificarLogo(req.getLogo()));
 
+        if (req.getBalanzaEtiquetas() != null) perfil.setBalanzaEtiquetas(req.getBalanzaEtiquetas());
+        if (req.getBalanzaPrefijo() != null) perfil.setBalanzaPrefijo(req.getBalanzaPrefijo());
+        if (req.getBalanzaDigitosPlu() != null) perfil.setBalanzaDigitosPlu(req.getBalanzaDigitosPlu());
+        if (req.getBalanzaTipoValor() != null) perfil.setBalanzaTipoValor(req.getBalanzaTipoValor());
+        int digitosValor = configEtiquetas(perfil).digitosValor();
+        if (digitosValor < 4 || digitosValor > 6) {
+            throw new ReglaNegocioException("Con ese prefijo y ese PLU quedan " + digitosValor
+                    + " dígitos para el peso/importe; deben ser entre 4 y 6");
+        }
+
         return aResponse(perfilRepository.save(perfil));
+    }
+
+    /** Cómo leer las etiquetas de la balanza (lo usa el escaneo del Punto de Venta) */
+    @Transactional(readOnly = true)
+    public EtiquetaBalanza.Config configEtiquetas() {
+        return configEtiquetas(perfilRepository.findFirstByOrderByIdAsc().orElseGet(PerfilTienda::new));
+    }
+
+    private static EtiquetaBalanza.Config configEtiquetas(PerfilTienda p) {
+        return new EtiquetaBalanza.Config(Boolean.TRUE.equals(p.getBalanzaEtiquetas()), p.getBalanzaPrefijo(),
+                p.getBalanzaDigitosPlu(), p.getBalanzaTipoValor());
     }
 
     // ---------------------------------------------------------------------
@@ -97,7 +119,11 @@ public class ConfiguracionService {
                 p.getTelefono(),
                 p.getMensajeTicket(),
                 p.getAnchoTicket() != null ? p.getAnchoTicket() : 80,
-                codificarLogo(p.getLogo())
+                codificarLogo(p.getLogo()),
+                Boolean.TRUE.equals(p.getBalanzaEtiquetas()),
+                p.getBalanzaPrefijo(),
+                p.getBalanzaDigitosPlu(),
+                p.getBalanzaTipoValor()
         );
     }
 }

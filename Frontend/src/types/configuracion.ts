@@ -11,4 +11,11 @@ export interface PerfilTienda {
     mensajeTicket: string | null;
     anchoTicket: AnchoTicket;
     logo: string | null;          // data URL ("data:image/png;base64,...")
+    // Etiquetas de la balanza: prefijo + PLU + peso/importe + dígito de control
+    balanzaEtiquetas: boolean;
+    balanzaPrefijo: string;
+    balanzaDigitosPlu: number;
+    balanzaTipoValor: TipoValorEtiqueta;
 }
+
+export type TipoValorEtiqueta = 'PESO' | 'PRECIO';

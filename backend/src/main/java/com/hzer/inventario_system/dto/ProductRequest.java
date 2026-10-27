@@ -17,6 +17,10 @@ public class ProductRequest {
     @Size(max = 255)
     private String codigoBarras;
 
+    /** Código del producto en la balanza de etiquetas (1 a 6 dígitos) */
+    @Pattern(regexp = "^$|^\\d{1,6}$", message = "El PLU son de 1 a 6 dígitos")
+    private String plu;
+
     @PositiveOrZero(message = "El costo no puede ser negativo")
     @Digits(integer = 8, fraction = 2)
     private BigDecimal precioCosto;

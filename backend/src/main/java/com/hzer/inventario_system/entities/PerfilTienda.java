@@ -31,6 +31,24 @@ public class PerfilTienda {
     @Column(name = "ancho_ticket", nullable = false)
     private Integer anchoTicket = 80;
 
+    // ---- Etiquetas de la balanza (ver util/EtiquetaBalanza) ----
+
+    /** ¿Se reconocen los códigos de barras que imprime la balanza? */
+    @Column(name = "balanza_etiquetas", nullable = false)
+    private Boolean balanzaEtiquetas = false;
+
+    /** Con qué empiezan esas etiquetas (casi siempre "20" o "2") */
+    @Column(name = "balanza_prefijo", nullable = false, length = 2)
+    private String balanzaPrefijo = "20";
+
+    /** Cuántos dígitos ocupa el PLU dentro de la etiqueta (4 a 6) */
+    @Column(name = "balanza_digitos_plu", nullable = false)
+    private Integer balanzaDigitosPlu = 5;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "balanza_tipo_valor", nullable = false, length = 10)
+    private TipoValorEtiqueta balanzaTipoValor = TipoValorEtiqueta.PESO;
+
     /** Imagen PNG/JPG chica (BYTEA). El frontend la reduce a 256 px antes de subirla */
     private byte[] logo;
 }

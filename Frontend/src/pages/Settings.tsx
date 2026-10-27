@@ -1,7 +1,9 @@
 // src/pages/Settings.tsx
 // Configuraciones: datos de la bodega, ticket e impresión, y la cuenta.
 import { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { SeguridadTab } from '../components/settings/SeguridadTab';
+import { BalanzaTab } from '../components/settings/BalanzaTab';
 import { configuracionService } from '../services/configuracionService';
 import { ApiError } from '../services/api';
 import { establecerTienda, tienda } from '../config/tienda';
@@ -9,7 +11,7 @@ import { htmlTicket, imprimirTicket } from '../utils/ticket';
 import type { PerfilTienda } from '../types/configuracion';
 import type { Venta } from '../types/pos';
 
-type Tab = 'general' | 'ticket' | 'seguridad';
+type Tab = 'general' | 'ticket' | 'balanza' | 'seguridad';
 
 const inputCls = 'w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-black outline-none transition';
 const labelCls = 'block text-sm font-semibold text-gray-700 mb-2';
@@ -52,7 +54,10 @@ function prepararLogo(archivo: File): Promise<string> {
 }
 
 export function Settings() {
-    const [activeTab, setActiveTab] = useState<Tab>('general');
+    // El Punto de Venta puede mandarnos directo a una pestaña (ej. "Configurar" balanza)
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState<Tab>(
+        () => (location.state as { tab?: Tab } | null)?.tab ?? 'general');
     const [form, setForm] = useState<PerfilTienda>(tienda());   // arrancamos con la copia local
     const [cargando, setCargando] = useState(true);
     const [guardando, setGuardando] = useState(false);
@@ -126,12 +131,13 @@ export function Settings() {
 
             <div>
                 <h1 className="text-2xl font-bold text-gray-900">Configuraciones</h1>
-                <p className="text-sm text-gray-500 mt-1">Datos de tu bodega, el ticket y tu cuenta.</p>
+                <p className="text-sm text-gray-500 mt-1">Datos de tu bodega, el ticket, la balanza y tu cuenta.</p>
             </div>
 
             <div className="flex gap-3 border-b border-gray-200 pb-4 overflow-x-auto">
                 {tabBtn('general', '/icons/store.svg', 'Perfil de Tienda')}
                 {tabBtn('ticket', '/icons/receipt.svg', 'Ticket e Impresión')}
+                {tabBtn('balanza', '/icons/balanza.svg', 'Balanza')}
                 {tabBtn('seguridad', '/icons/lock.svg', 'Seguridad y Cuenta')}
             </div>
 
@@ -251,6 +257,8 @@ export function Settings() {
                         </div>
                     </div>
                 )}
+
+                {activeTab === 'balanza' && <BalanzaTab form={form} cambiar={cambiar} />}
 
                 {activeTab === 'seguridad' && <SeguridadTab />}
 
