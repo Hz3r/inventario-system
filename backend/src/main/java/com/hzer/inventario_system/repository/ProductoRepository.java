@@ -25,6 +25,12 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> {
 
         boolean existsByCodigoBarrasAndIdNot(String codigoBarras, Long id);
 
+        // Etiquetas de balanza: el PLU identifica al producto
+        Optional<Producto> findByPluAndActivoTrue(String plu);
+
+        Optional<Producto> findByPlu(String plu);
+
+
         // Lista del inventario, A-Z
         List<Producto> findByActivoTrueOrderByNombreAsc();
 

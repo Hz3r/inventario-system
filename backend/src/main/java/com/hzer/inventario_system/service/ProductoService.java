@@ -5,11 +5,13 @@ import com.hzer.inventario_system.entities.*;
 import com.hzer.inventario_system.exception.RecursoNoEncontradoException;
 import com.hzer.inventario_system.exception.ReglaNegocioException;
 import com.hzer.inventario_system.repository.*;
+import com.hzer.inventario_system.util.EtiquetaBalanza;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,6 +27,7 @@ public class ProductoService {
     private final CategoryRepository categoryRepository;
     private final ProveedorRepository proveedorRepository;
     private final KardexService kardexService;
+    private final ConfiguracionService configuracionService;
 
     // ============================ CONSULTAS ============================
 
@@ -44,7 +47,7 @@ public class ProductoService {
         return aResponse(buscarProducto(id));
     }
 
-    /** Lo que pasa cuando la pistola lee un código: puede ser una botella o una caja */
+    /** Lo que pasa cuando la pistola lee un código: puede ser una botella, una caja o una etiqueta de balanza */
     public EscaneoResponse escanear(String codigo) {
         String c = limpiar(codigo);
         if (c == null) throw new ReglaNegocioException("El código está vacío");
@@ -53,15 +56,58 @@ public class ProductoService {
         if (unidad.isPresent()) {
             Producto p = unidad.get();
             return new EscaneoResponse(p.getId(), p.getNombre(), null, p.getUnidadMedida().name(),
-                    BigDecimal.ONE, p.getPrecioVenta(), p.getUnidadMedida(), p.getStockActual());
+                    BigDecimal.ONE, p.getPrecioVenta(), p.getUnidadMedida(), p.getStockActual(), null, null);
         }
 
-        ProductoPresentacion pr = presentacionRepository.findByCodigoBarrasAndActivoTrue(c)
-                .filter(x -> Boolean.TRUE.equals(x.getProducto().getActivo()))
+        Optional<ProductoPresentacion> caja = presentacionRepository.findByCodigoBarrasAndActivoTrue(c)
+                .filter(x -> Boolean.TRUE.equals(x.getProducto().getActivo()));
+        if (caja.isPresent()) {
+            ProductoPresentacion pr = caja.get();
+            Producto p = pr.getProducto();
+            return new EscaneoResponse(p.getId(), p.getNombre(), pr.getId(), pr.getNombre(),
+                    pr.getFactor(), pr.getPrecioVenta(), p.getUnidadMedida(), p.getStockActual(), null, null);
+        }
+
+        return escanearEtiquetaBalanza(c)
                 .orElseThrow(() -> new RecursoNoEncontradoException("No hay ningún producto con el código " + c));
-        Producto p = pr.getProducto();
-        return new EscaneoResponse(p.getId(), p.getNombre(), pr.getId(), pr.getNombre(),
-                pr.getFactor(), pr.getPrecioVenta(), p.getUnidadMedida(), p.getStockActual());
+    }
+
+    /** Etiqueta impresa por la balanza: el PLU dice el producto y el resto, el peso o el importe */
+    private Optional<EscaneoResponse> escanearEtiquetaBalanza(String codigo) {
+        EtiquetaBalanza.Lectura lectura;
+        try {
+            lectura = EtiquetaBalanza.leer(codigo, configuracionService.configEtiquetas()).orElse(null);
+        } catch (IllegalArgumentException e) {
+            throw new ReglaNegocioException(e.getMessage() + ". Vuelve a escanear la etiqueta.");
+        }
+        if (lectura == null) return Optional.empty();
+
+        Producto p = productoRepository.findByPluAndActivoTrue(lectura.plu())
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Etiqueta de balanza con PLU " + lectura.plu() + ": ningún producto tiene ese PLU"));
+        if (lectura.valor().signum() <= 0) {
+            throw new ReglaNegocioException("La etiqueta de " + p.getNombre() + " marca 0. Vuelve a pesar el producto.");
+        }
+
+        BigDecimal cantidad;
+        BigDecimal importe = null;
+        if (lectura.tipo() == TipoValorEtiqueta.PESO) {
+            cantidad = lectura.valor();
+        } else {
+            if (p.getPrecioVenta() == null || p.getPrecioVenta().signum() <= 0) {
+                throw new ReglaNegocioException(p.getNombre() + " no tiene precio de venta: no se puede calcular el peso");
+            }
+            importe = lectura.valor();
+            cantidad = importe.divide(p.getPrecioVenta(), 3, RoundingMode.HALF_UP);
+        }
+        if (p.getUnidadMedida() == UnidadMedida.UND) {
+            if (cantidad.stripTrailingZeros().scale() > 0) {
+                throw new ReglaNegocioException(p.getNombre() + " se vende por unidad, pero la etiqueta trae "
+                        + cantidad.stripTrailingZeros().toPlainString() + ". Revisa su unidad de medida o su PLU.");
+            }
+        }
+        return Optional.of(new EscaneoResponse(p.getId(), p.getNombre(), null, p.getUnidadMedida().name(),
+                BigDecimal.ONE, p.getPrecioVenta(), p.getUnidadMedida(), p.getStockActual(), cantidad, importe));
     }
 
     // ============================ PRODUCTOS ============================
@@ -70,6 +116,7 @@ public class ProductoService {
     public ProductoResponse crear(ProductRequest req) {
         String codigo = limpiar(req.getCodigoBarras());
         validarCodigoLibre(codigo, null, null);
+        validarPluLibre(EtiquetaBalanza.normalizarPlu(req.getPlu()), null);
 
         Producto p = new Producto();
         copiarDatos(req, p, codigo);
@@ -89,6 +136,7 @@ public class ProductoService {
         Producto p = buscarProducto(id);
         String codigo = limpiar(req.getCodigoBarras());
         validarCodigoLibre(codigo, p.getId(), null);
+        validarPluLibre(EtiquetaBalanza.normalizarPlu(req.getPlu()), p.getId());
 
         if (req.getUnidadMedida() != null && req.getUnidadMedida() != p.getUnidadMedida()
                 && p.getStockActual().signum() != 0) {
@@ -182,6 +230,7 @@ public class ProductoService {
     private void copiarDatos(ProductRequest req, Producto p, String codigo) {
         p.setNombre(req.getNombre().trim());
         p.setCodigoBarras(codigo);
+        p.setPlu(EtiquetaBalanza.normalizarPlu(req.getPlu()));
         p.setPrecioCosto(req.getPrecioCosto());
         p.setPrecioVenta(req.getPrecioVenta());
         if (req.getUnidadMedida() != null) p.setUnidadMedida(req.getUnidadMedida());
@@ -211,6 +260,17 @@ public class ProductoService {
         if (usadoPorProducto || usadoPorPresentacion) {
             throw new ReglaNegocioException("El código de barras " + codigo + " ya está en uso");
         }
+    }
+
+    /** Dos productos no pueden tener el mismo PLU: la balanza no sabría cuál es */
+    private void validarPluLibre(String plu, Long productoIdActual) {
+        if (plu == null) return;
+        productoRepository.findByPlu(plu)
+                .filter(otro -> !otro.getId().equals(productoIdActual))
+                .ifPresent(otro -> {
+                    throw new ReglaNegocioException("El PLU " + plu + " ya lo tiene " + otro.getNombre()
+                            + (Boolean.TRUE.equals(otro.getActivo()) ? "" : " (producto eliminado)"));
+                });
     }
 
     /** Una caja de un producto por unidades no puede traer 6.5 botellas */

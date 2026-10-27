@@ -6,6 +6,7 @@ import com.hzer.inventario_system.entities.*;
 import com.hzer.inventario_system.exception.RecursoNoEncontradoException;
 import com.hzer.inventario_system.exception.ReglaNegocioException;
 import com.hzer.inventario_system.repository.*;
+import com.hzer.inventario_system.util.EtiquetaBalanza;
 import com.hzer.inventario_system.util.Excel;
 import com.hzer.inventario_system.util.Excel.Columna;
 import com.hzer.inventario_system.util.Excel.Fila;
@@ -66,6 +67,9 @@ public class ImportacionService {
             new Columna("codigo", "Código de barras", false,
                     "Código que lee la pistola. Si ya existe un producto con ese código, se actualiza.",
                     "7750182000123", "codigo", "codigo barras", "cod barras", "ean", "barcode"),
+            new Columna("plu", "PLU balanza", false,
+                    "Código del producto en la balanza de etiquetas (1 a 6 dígitos). Solo para productos que se pesan.",
+                    "123", "plu", "codigo balanza", "cod balanza"),
             new Columna("categoria", "Categoría", false, "Si la categoría no existe, se crea.",
                     "Cervezas", "categoria", "rubro", "familia"),
             new Columna("precioCosto", "Precio costo", false, "Lo que te cuesta a ti (S/).",
@@ -139,7 +143,7 @@ public class ImportacionService {
     public byte[] exportar(Tipo tipo) {
         List<List<Object>> filas = switch (tipo) {
             case PRODUCTOS -> productoService.listar(null).stream()
-                    .map(p -> Arrays.<Object>asList(p.nombre(), p.codigoBarras(), p.categoriaNombre(),
+                    .map(p -> Arrays.<Object>asList(p.nombre(), p.codigoBarras(), p.plu(), p.categoriaNombre(),
                             p.precioCosto(), p.precioVenta(), p.stockActual().stripTrailingZeros(),
                             p.stockMinimo() == null ? null : p.stockMinimo().stripTrailingZeros(),
                             p.unidadMedida().name(), Boolean.FALSE.equals(p.igv()) ? "NO" : "SI",
@@ -249,6 +253,16 @@ public class ImportacionService {
             }
         }
         repetido(vistos, codigo == null ? null : "codigo:" + codigo, f, "El código " + codigo, errores);
+
+        // PLU de la balanza: no puede tenerlo otro producto
+        String plu = EtiquetaBalanza.normalizarPlu(f.texto("plu"));
+        if (plu != null && plu.matches("\\d{1,6}")) {
+            final Producto actual = existente;
+            productoRepository.findByPlu(plu)
+                    .filter(otro -> actual == null || !otro.getId().equals(actual.getId()))
+                    .ifPresent(otro -> errores.add("El PLU " + plu + " ya lo tiene " + otro.getNombre()));
+            repetido(vistos, "plu:" + plu, f, "El PLU " + plu, errores);
+        }
         repetido(vistos, nombre == null ? null : "nombre:" + nombre.toLowerCase(Locale.ROOT), f,
                 "El producto '" + nombre + "'", errores);
 
@@ -256,6 +270,7 @@ public class ImportacionService {
         ProductRequest req = new ProductRequest();
         req.setNombre(nombre);
         req.setCodigoBarras(codigo != null ? codigo : existente != null ? existente.getCodigoBarras() : null);
+        req.setPlu(primero(f.texto("plu"), existente == null ? null : existente.getPlu()));
         req.setPrecioCosto(dinero(f.numero("precioCosto"), existente == null ? null : existente.getPrecioCosto()));
         req.setPrecioVenta(dinero(f.numero("precioVenta"), existente == null ? null : existente.getPrecioVenta()));
         req.setStockMinimo(cantidad(f.numero("stockMinimo"), existente == null ? null : existente.getStockMinimo()));

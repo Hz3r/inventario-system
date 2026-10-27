@@ -26,6 +26,7 @@ export interface Producto {
     id: number;
     nombre: string;
     codigoBarras: string | null;
+    plu: string | null;           // código en la balanza de etiquetas
     categoriaId: number | null;
     categoriaNombre: string | null;
     proveedorId: number | null;
@@ -46,6 +47,7 @@ export interface Producto {
 export interface ProductoRequest {
     nombre: string;
     codigoBarras: string | null;
+    plu: string | null;
     precioCosto: number | null;
     precioVenta: number;
     stockInicial: number | null;  // solo se usa al crear
@@ -96,6 +98,8 @@ export interface Escaneo {
     precioVenta: number;
     unidadMedida: UnidadMedida;
     stockActual: number;
+    cantidad: number | null;      // etiqueta de balanza: lo que pesó (null = código normal)
+    importe: number | null;       // etiqueta de balanza con precio: el importe impreso
 }
 
 // ---- Textos para mostrar en pantalla ----

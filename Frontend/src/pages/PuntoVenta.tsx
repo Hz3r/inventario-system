@@ -1,6 +1,6 @@
 // src/pages/PuntoVenta.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Minus, Plus, ScanBarcode, Trash2 } from 'lucide-react';
+import { Minus, Plus, Scale, ScanBarcode, Trash2 } from 'lucide-react';
 import { inventarioService } from '../services/inventarioService';
 import { posService } from '../services/posService';
 import { ApiError } from '../services/api';
@@ -11,6 +11,9 @@ import { centavos, subtotalLineaCent } from '../utils/dinero';
 import { imprimirTicket } from '../utils/ticket';
 import { CobroModal } from '../components/pos/CobroModal';
 import { CierreCajaModal } from '../components/pos/CierreCajaModal';
+import { BalanzaEstado } from '../components/balanza/BalanzaEstado';
+import { useBalanza } from '../components/balanza/useBalanza';
+import { balanza } from '../utils/balanza';
 
 let contadorLineas = 0;
 const nuevaKey = () => `linea-${++contadorLineas}`;
@@ -21,7 +24,7 @@ const num = (s: string): number => {
     return Number.isFinite(n) && n > 0 ? n : 0;
 };
 
-function crearLinea(p: Producto, pres: Presentacion | null): LineaCarrito {
+function crearLinea(p: Producto, pres: Presentacion | null, cantidad = 1): LineaCarrito {
     return {
         key: nuevaKey(),
         productoId: p.id,
@@ -34,7 +37,7 @@ function crearLinea(p: Producto, pres: Presentacion | null): LineaCarrito {
         presentacionNombre: pres?.nombre ?? null,
         factor: pres?.factor ?? 1,
         precioUnitario: pres?.precioVenta ?? p.precioVenta,
-        cantidad: '1',
+        cantidad: String(cantidad),
         descuento: '',
     };
 }
@@ -51,6 +54,9 @@ export function PuntoVenta() {
     const [ultimaVenta, setUltimaVenta] = useState<Venta | null>(null);
     const [cobrando, setCobrando] = useState(false);
     const [cerrandoCaja, setCerrandoCaja] = useState(false);
+    const { estado: estadoBalanza, config: configBalanza } = useBalanza();
+    const balanzaLista = configBalanza.activa && estadoBalanza === 'conectada';
+    const [pesando, setPesando] = useState<string | null>(null);   // key de la línea que se está pesando
     // Preferencia de ESTA computadora (la caja con impresora la deja activada)
     const [autoImprimir, setAutoImprimir] = useState<boolean>(() => {
         try { return localStorage.getItem('pos_auto_imprimir') === 'true'; } catch { return false; }
@@ -87,12 +93,15 @@ export function PuntoVenta() {
 
     // ============================ CARRITO ============================
 
-    const agregar = (producto: Producto, presentacionId: number | null = null) => {
+    /**
+     * @param cantidadPesada viene de una etiqueta de balanza: la línea entra ya con su peso
+     */
+    const agregar = (producto: Producto, presentacionId: number | null = null, cantidadPesada: number | null = null) => {
         setError(null);
         setUltimaVenta(null);
         const pres = presentacionId ? producto.presentaciones.find((p) => p.id === presentacionId) ?? null : null;
-        const porPeso = producto.unidadMedida !== 'UND' && !pres;
-        const nueva = crearLinea(producto, pres);
+        const porPeso = (producto.unidadMedida !== 'UND' && !pres) || cantidadPesada !== null;
+        const nueva = crearLinea(producto, pres, cantidadPesada ?? 1);
 
         setCarrito((prev) => {
             // Lo que se cuenta por unidades se acumula en la misma línea; lo que se pesa va aparte
@@ -105,15 +114,41 @@ export function PuntoVenta() {
             return [...prev, nueva];
         });
 
-        if (porPeso) {
-            // Producto por peso: el cursor salta a la cantidad para escribir los kilos
-            setTimeout(() => {
-                const el = document.getElementById(`cant-${nueva.key}`) as HTMLInputElement | null;
-                el?.focus();
-                el?.select();
-            }, 0);
+        if (cantidadPesada !== null) {
+            enfocarBuscador();                       // la etiqueta ya trae el peso
+        } else if (porPeso && balanzaLista) {
+            void pesarLinea(nueva.key);              // se lee la balanza conectada
+        } else if (porPeso) {
+            enfocarCantidad(nueva.key);              // sin balanza: se escriben los kilos
         } else {
             enfocarBuscador();
+        }
+    };
+
+    // Producto por peso: el cursor salta a la cantidad para escribir los kilos
+    const enfocarCantidad = (key: string) => setTimeout(() => {
+        const el = document.getElementById(`cant-${key}`) as HTMLInputElement | null;
+        el?.focus();
+        el?.select();
+    }, 0);
+
+    /** Lee la balanza conectada y pone el peso en la línea */
+    const pesarLinea = async (key: string) => {
+        setPesando(key);
+        try {
+            const kg = await balanza.pesar();
+            if (kg <= 0) {
+                setError('La balanza marca 0. Pon el producto en la balanza y vuelve a pesar (F4).');
+                enfocarCantidad(key);
+                return;
+            }
+            actualizarLinea(key, { cantidad: String(kg) });
+            enfocarBuscador();
+        } catch (e) {
+            setError(`${e instanceof Error ? e.message : 'No se pudo leer la balanza'}. Puedes escribir el peso a mano.`);
+            enfocarCantidad(key);
+        } finally {
+            setPesando(null);
         }
     };
 
@@ -173,7 +208,7 @@ export function PuntoVenta() {
                 const r = await inventarioService.escanear(valor);
                 const producto = productos.find((p) => p.id === r.productoId)
                     ?? await inventarioService.obtenerProducto(r.productoId);
-                agregar(producto, r.presentacionId);
+                agregar(producto, r.presentacionId, r.cantidad);
             } catch (err) {
                 setError(err instanceof ApiError ? err.message : 'No se pudo leer el código');
             }
@@ -203,17 +238,22 @@ export function PuntoVenta() {
         descuento: num(l.descuento) > 0 ? num(l.descuento) : null,
     }));
 
-    // F2 = cobrar
+    // F2 = cobrar · F4 = volver a pesar el último producto por peso
+    const ultimaPorPeso = [...carrito].reverse().find((l) => l.unidadMedida !== 'UND' && l.presentacionId === null);
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
             if (e.key === 'F2' && puedeCobrar && !cobrando && !cerrandoCaja) {
                 e.preventDefault();
                 setCobrando(true);
             }
+            if (e.key === 'F4' && balanzaLista && ultimaPorPeso && !pesando && !cobrando) {
+                e.preventDefault();
+                void pesarLinea(ultimaPorPeso.key);
+            }
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [puedeCobrar, cobrando, cerrandoCaja]);
+    });
 
     const ventaTerminada = (venta: Venta) => {
         setCobrando(false);
@@ -318,6 +358,8 @@ export function PuntoVenta() {
                         )}
                     </div>
 
+                    {configBalanza.activa && <BalanzaEstado compacto />}
+
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-medium">{error}</div>
                     )}
@@ -414,6 +456,16 @@ export function PuntoVenta() {
                                                             className="p-1.5 rounded-lg hover:bg-gray-100"
                                                         >
                                                             <Plus className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    {porPeso && balanzaLista && (
+                                                        <button
+                                                            onClick={() => pesarLinea(l.key)}
+                                                            disabled={pesando !== null}
+                                                            title="Leer el peso de la balanza (F4)"
+                                                            className={`p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40 ${pesando === l.key ? 'animate-pulse text-black' : 'text-gray-500'}`}
+                                                        >
+                                                            <Scale className="w-4 h-4" />
                                                         </button>
                                                     )}
                                                 </div>

@@ -5,8 +5,9 @@ import com.hzer.inventario_system.entities.UnidadMedida;
 import java.math.BigDecimal;
 
 /**
- * Resultado de escanear un código: puede ser la unidad (botella)
- * o una presentación (caja). factor dice cuántas unidades base descuenta.
+ * Resultado de escanear un código: puede ser la unidad (botella),
+ * una presentación (caja) o una etiqueta de balanza (trae la cantidad pesada).
+ * factor dice cuántas unidades base descuenta.
  */
 public record EscaneoResponse(
         Long productoId,
@@ -16,6 +17,8 @@ public record EscaneoResponse(
         BigDecimal factor,
         BigDecimal precioVenta,
         UnidadMedida unidadMedida,
-        BigDecimal stockActual
+        BigDecimal stockActual,
+        BigDecimal cantidad,      // solo en etiquetas de balanza: los kilos de la etiqueta (null = 1 unidad)
+        BigDecimal importe        // solo en etiquetas con precio: lo que dice la etiqueta en soles
 ) {
 }

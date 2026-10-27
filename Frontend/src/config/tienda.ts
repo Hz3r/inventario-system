@@ -17,6 +17,10 @@ const POR_DEFECTO: PerfilTienda = {
     mensajeTicket: '¡Gracias por su compra!',
     anchoTicket: 80,
     logo: null,
+    balanzaEtiquetas: false,
+    balanzaPrefijo: '20',
+    balanzaDigitosPlu: 5,
+    balanzaTipoValor: 'PESO',
 };
 
 function leerCopia(): PerfilTienda {
