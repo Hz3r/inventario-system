@@ -11,7 +11,9 @@ const CLAVE = 'perfil_tienda';
 
 const POR_DEFECTO: PerfilTienda = {
     nombre: 'MI BODEGA',
+    razonSocial: null,
     ruc: null,
+    desglosaIgv: true,
     direccion: 'Tacna, Perú',
     telefono: null,
     mensajeTicket: '¡Gracias por su compra!',

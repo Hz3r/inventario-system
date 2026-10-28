@@ -11,6 +11,7 @@ import { centavos, subtotalLineaCent } from '../utils/dinero';
 import { imprimirTicket } from '../utils/ticket';
 import { CobroModal } from '../components/pos/CobroModal';
 import { CierreCajaModal } from '../components/pos/CierreCajaModal';
+import { CodigoNuevoModal } from '../components/pos/CodigoNuevoModal';
 import { BalanzaEstado } from '../components/balanza/BalanzaEstado';
 import { useBalanza } from '../components/balanza/useBalanza';
 import { balanza } from '../utils/balanza';
@@ -23,6 +24,17 @@ const num = (s: string): number => {
     const n = Number(s);
     return Number.isFinite(n) && n > 0 ? n : 0;
 };
+
+/**
+ * "6*7750182000123" o "6x agua" → { cantidad: 6, consulta: "7750182000123" }
+ * Así se escribe la cantidad ANTES de pasar el producto por el escáner.
+ */
+function separarCantidad(valor: string): { cantidad: number | null; consulta: string } {
+    const m = valor.trim().match(/^(\d+(?:[.,]\d+)?)\s*[*xX]\s*(.*)$/);
+    if (!m) return { cantidad: null, consulta: valor.trim() };
+    const cantidad = Number(m[1].replace(',', '.'));
+    return { cantidad: cantidad > 0 ? cantidad : null, consulta: m[2].trim() };
+}
 
 function crearLinea(p: Producto, pres: Presentacion | null, cantidad = 1): LineaCarrito {
     return {
@@ -54,6 +66,8 @@ export function PuntoVenta() {
     const [ultimaVenta, setUltimaVenta] = useState<Venta | null>(null);
     const [cobrando, setCobrando] = useState(false);
     const [cerrandoCaja, setCerrandoCaja] = useState(false);
+    // Código escaneado que no existe: se abre el modal para vincularlo o registrarlo
+    const [codigoNuevo, setCodigoNuevo] = useState<{ codigo: string; veces: number } | null>(null);
     const { estado: estadoBalanza, config: configBalanza } = useBalanza();
     const balanzaLista = configBalanza.activa && estadoBalanza === 'conectada';
     const [pesando, setPesando] = useState<string | null>(null);   // key de la línea que se está pesando
@@ -95,13 +109,25 @@ export function PuntoVenta() {
 
     /**
      * @param cantidadPesada viene de una etiqueta de balanza: la línea entra ya con su peso
+     * @param veces          cantidad escrita antes de escanear ("6*" + código = 6 unidades)
      */
-    const agregar = (producto: Producto, presentacionId: number | null = null, cantidadPesada: number | null = null) => {
+    const agregar = (producto: Producto, presentacionId: number | null = null,
+                     cantidadPesada: number | null = null, veces = 1) => {
         setError(null);
         setUltimaVenta(null);
         const pres = presentacionId ? producto.presentaciones.find((p) => p.id === presentacionId) ?? null : null;
+        // "1.5*arroz": en lo que se vende por kilo, la cantidad escrita son los kilos
+        if (cantidadPesada === null && veces !== 1 && producto.unidadMedida !== 'UND' && !pres) {
+            cantidadPesada = veces;
+            veces = 1;
+        }
+        if (!Number.isInteger(veces)) {
+            setError(`${producto.nombre} se vende por unidad: la cantidad debe ser un número entero`);
+            enfocarBuscador();
+            return;
+        }
         const porPeso = (producto.unidadMedida !== 'UND' && !pres) || cantidadPesada !== null;
-        const nueva = crearLinea(producto, pres, cantidadPesada ?? 1);
+        const nueva = crearLinea(producto, pres, cantidadPesada ?? veces);
 
         setCarrito((prev) => {
             // Lo que se cuenta por unidades se acumula en la misma línea; lo que se pesa va aparte
@@ -109,7 +135,7 @@ export function PuntoVenta() {
                 ? undefined
                 : prev.find((l) => l.productoId === producto.id && l.presentacionId === (pres?.id ?? null));
             if (existente) {
-                return prev.map((l) => (l.key === existente.key ? { ...l, cantidad: String(num(l.cantidad) + 1) } : l));
+                return prev.map((l) => (l.key === existente.key ? { ...l, cantidad: String(num(l.cantidad) + veces) } : l));
             }
             return [...prev, nueva];
         });
@@ -183,7 +209,8 @@ export function PuntoVenta() {
 
     // ======================= BUSCADOR / PISTOLA =======================
 
-    const texto = busqueda.trim().toLowerCase();
+    const { cantidad: cantidadEscrita, consulta } = separarCantidad(busqueda);
+    const texto = consulta.toLowerCase();
     const sugerencias = useMemo(
         () => (texto.length < 2 || /^\d+$/.test(texto)
             ? []
@@ -198,9 +225,11 @@ export function PuntoVenta() {
         }
         if (e.key !== 'Enter') return;
         e.preventDefault();
-        const valor = busqueda.trim();
+        const { cantidad, consulta: valor } = separarCantidad(busqueda);
+        if (cantidad !== null && !valor) return;   // escribió "6*": falta pasar el producto
         setBusqueda('');
         if (!valor) return;
+        const veces = cantidad ?? 1;
 
         // Solo números = código de barras (de botella o de caja): lo resuelve el backend
         if (/^\d+$/.test(valor)) {
@@ -208,14 +237,19 @@ export function PuntoVenta() {
                 const r = await inventarioService.escanear(valor);
                 const producto = productos.find((p) => p.id === r.productoId)
                     ?? await inventarioService.obtenerProducto(r.productoId);
-                agregar(producto, r.presentacionId, r.cantidad);
+                agregar(producto, r.presentacionId, r.cantidad, veces);
             } catch (err) {
-                setError(err instanceof ApiError ? err.message : 'No se pudo leer el código');
+                if (err instanceof ApiError && err.status === 404) {
+                    setError(null);
+                    setCodigoNuevo({ codigo: valor, veces });   // código nuevo: ¿qué producto es?
+                } else {
+                    setError(err instanceof ApiError ? err.message : 'No se pudo leer el código');
+                }
             }
             return;
         }
         // Texto: Enter agrega la primera coincidencia
-        if (sugerencias.length > 0) agregar(sugerencias[0]);
+        if (sugerencias.length > 0) agregar(sugerencias[0], null, null, veces);
         else setError(`No se encontró ningún producto con "${valor}"`);
     };
 
@@ -242,7 +276,7 @@ export function PuntoVenta() {
     const ultimaPorPeso = [...carrito].reverse().find((l) => l.unidadMedida !== 'UND' && l.presentacionId === null);
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'F2' && puedeCobrar && !cobrando && !cerrandoCaja) {
+            if (e.key === 'F2' && puedeCobrar && !cobrando && !cerrandoCaja && !codigoNuevo) {
                 e.preventDefault();
                 setCobrando(true);
             }
@@ -296,6 +330,19 @@ export function PuntoVenta() {
                     onDone={ventaTerminada}
                 />
             )}
+            {codigoNuevo && (
+                <CodigoNuevoModal
+                    codigo={codigoNuevo.codigo}
+                    productos={productos}
+                    onClose={() => { setCodigoNuevo(null); enfocarBuscador(); }}
+                    onListo={(producto) => {
+                        const veces = codigoNuevo.veces;
+                        setCodigoNuevo(null);
+                        agregar(producto, null, null, veces);
+                        cargarProductos();   // el buscador ya conoce el código / producto nuevo
+                    }}
+                />
+            )}
             {cerrandoCaja && (
                 <CierreCajaModal
                     caja={caja}
@@ -335,15 +382,20 @@ export function PuntoVenta() {
                             value={busqueda}
                             onChange={(e) => setBusqueda(e.target.value)}
                             onKeyDown={onKeyDownBuscador}
-                            placeholder="Escanea un código o escribe el nombre del producto..."
+                            placeholder="Escanea o escribe el producto · para varios: 6* y escanea"
                             className="w-full pl-14 pr-4 py-4 text-lg border-2 border-gray-200 rounded-2xl focus:border-black outline-none transition bg-white shadow-sm"
                         />
+                        {cantidadEscrita !== null && (
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 bg-black text-white text-sm font-bold px-3 py-1 rounded-lg pointer-events-none">
+                                × {formatCantidad(cantidadEscrita)}{!consulta && ' · pasa el producto'}
+                            </span>
+                        )}
                         {sugerencias.length > 0 && (
                             <div className="absolute z-20 mt-2 w-full bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
                                 {sugerencias.map((p) => (
                                     <button
                                         key={p.id}
-                                        onClick={() => { setBusqueda(''); agregar(p); }}
+                                        onClick={() => { setBusqueda(''); agregar(p, null, null, cantidadEscrita ?? 1); }}
                                         className="w-full text-left px-5 py-3 hover:bg-gray-50 flex justify-between items-center gap-4"
                                     >
                                         <span className="font-medium text-gray-900">{p.nombre}</span>

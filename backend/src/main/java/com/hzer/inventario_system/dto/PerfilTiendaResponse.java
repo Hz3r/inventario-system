@@ -4,7 +4,9 @@ import com.hzer.inventario_system.entities.TipoValorEtiqueta;
 
 public record PerfilTiendaResponse(
         String nombre,
+        String razonSocial,
         String ruc,
+        boolean desglosaIgv,
         String direccion,
         String telefono,
         String mensajeTicket,

@@ -62,4 +62,8 @@ public class VentaDetalle {
     // precioUnitario × cantidad − descuento
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal subtotal;
+
+    /** Si el producto estaba afecto al IGV cuando se vendió (el subtotal incluye IGV) */
+    @Column(name = "afecto_igv", nullable = false)
+    private Boolean afectoIgv = true;
 }

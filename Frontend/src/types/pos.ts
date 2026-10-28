@@ -87,6 +87,7 @@ export interface VentaItem {
     precioUnitario: number;
     descuento: number;
     subtotal: number;
+    afectoIgv: boolean;       // false = exonerado/inafecto
 }
 
 export interface VentaPago {
@@ -102,9 +103,14 @@ export interface Venta {
     cajaId: number;
     clienteId: number | null;
     clienteNombre: string | null;
+    clienteDocumento: string | null;
+    cajero: string | null;
     subtotal: number;
     descuento: number;
     total: number;
+    opGravada: number;        // base sin IGV
+    opExonerada: number;
+    igv: number;
     efectivoRecibido: number | null;
     vuelto: number | null;
     estado: EstadoVenta;

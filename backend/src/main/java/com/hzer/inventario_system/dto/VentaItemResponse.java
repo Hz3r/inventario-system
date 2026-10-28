@@ -13,13 +13,15 @@ public record VentaItemResponse(
         BigDecimal cantidadBase,
         BigDecimal precioUnitario,
         BigDecimal descuento,
-        BigDecimal subtotal
+        BigDecimal subtotal,
+        boolean afectoIgv
 ) {
     public static VentaItemResponse desde(VentaDetalle d) {
         return new VentaItemResponse(
                 d.getProducto().getId(),
                 d.getPresentacion() != null ? d.getPresentacion().getId() : null,
                 d.getDescripcion(), d.getCantidad(), d.getFactor(), d.getCantidadBase(),
-                d.getPrecioUnitario(), d.getDescuento(), d.getSubtotal());
+                d.getPrecioUnitario(), d.getDescuento(), d.getSubtotal(),
+                !Boolean.FALSE.equals(d.getAfectoIgv()));
     }
 }

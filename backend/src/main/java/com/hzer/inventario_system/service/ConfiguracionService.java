@@ -35,7 +35,9 @@ public class ConfiguracionService {
 
         PerfilTienda perfil = perfilRepository.findFirstByOrderByIdAsc().orElseGet(PerfilTienda::new);
         perfil.setNombre(req.getNombre().trim());
+        perfil.setRazonSocial(limpiar(req.getRazonSocial()));
         perfil.setRuc(limpiar(req.getRuc()));
+        if (req.getDesglosaIgv() != null) perfil.setDesglosaIgv(req.getDesglosaIgv());
         perfil.setDireccion(limpiar(req.getDireccion()));
         perfil.setTelefono(limpiar(req.getTelefono()));
         perfil.setMensajeTicket(limpiar(req.getMensajeTicket()));
@@ -114,7 +116,9 @@ public class ConfiguracionService {
     private static PerfilTiendaResponse aResponse(PerfilTienda p) {
         return new PerfilTiendaResponse(
                 p.getNombre() != null ? p.getNombre() : NOMBRE_POR_DEFECTO,
+                p.getRazonSocial(),
                 p.getRuc(),
+                !Boolean.FALSE.equals(p.getDesglosaIgv()),
                 p.getDireccion(),
                 p.getTelefono(),
                 p.getMensajeTicket(),

@@ -11,6 +11,12 @@ public class PerfilTiendaRequest {
     @Size(max = 100, message = "Máximo 100 caracteres")
     private String nombre;
 
+    @Size(max = 150, message = "Máximo 150 caracteres")
+    private String razonSocial;
+
+    /** null = se deja como estaba */
+    private Boolean desglosaIgv;
+
     /** Vacío, DNI (8 dígitos) o RUC (11 dígitos) */
     @Pattern(regexp = "^$|^\\d{8}$|^\\d{11}$", message = "El RUC tiene 11 dígitos (o DNI de 8)")
     private String ruc;

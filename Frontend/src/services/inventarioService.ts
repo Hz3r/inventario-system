@@ -21,6 +21,10 @@ export const inventarioService = {
 
     crearProducto: (data: ProductoRequest) => api.post<Producto>(`${BASE}/productos`, data),
 
+    /** Le pone a un producto existente el código que se acaba de escanear */
+    asignarCodigo: (id: number, codigo: string) =>
+        api.put<Producto>(`${BASE}/productos/${id}/codigo-barras`, { codigo }),
+
     actualizarProducto: (id: number, data: ProductoRequest) =>
         api.put<Producto>(`${BASE}/productos/${id}`, data),
 

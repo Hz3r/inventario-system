@@ -20,14 +20,16 @@ const CLAVE_AUTO_IMPRIMIR = 'pos_auto_imprimir';   // la misma que usa el Punto 
 /** Venta inventada solo para la vista previa y el ticket de prueba */
 const VENTA_EJEMPLO: Venta = {
     id: 0, numero: 123, fecha: new Date().toISOString(), cajaId: 0,
-    clienteId: null, clienteNombre: null,
-    subtotal: 12.5, descuento: 0, total: 12.5, efectivoRecibido: 20, vuelto: 7.5,
+    clienteId: null, clienteNombre: null, clienteDocumento: null, cajero: 'Administrador',
+    subtotal: 13.5, descuento: 0, total: 13.5, opGravada: 4.24, opExonerada: 8.5, igv: 0.76,
+    efectivoRecibido: 20, vuelto: 6.5,
     estado: 'COMPLETADA', motivoAnulacion: null, nota: null,
     items: [
-        { productoId: 1, presentacionId: null, descripcion: 'Gaseosa 500 ml', cantidad: 2, factor: 1, cantidadBase: 2, precioUnitario: 2.5, descuento: 0, subtotal: 5 },
-        { productoId: 2, presentacionId: null, descripcion: 'Arroz (kg)', cantidad: 1.5, factor: 1, cantidadBase: 1.5, precioUnitario: 5, descuento: 0, subtotal: 7.5 },
+        { productoId: 1, presentacionId: null, descripcion: 'Gaseosa 500 ml', cantidad: 2, factor: 1, cantidadBase: 2, precioUnitario: 2.5, descuento: 0, subtotal: 5, afectoIgv: true },
+        { productoId: 2, presentacionId: null, descripcion: 'Arroz (kg)', cantidad: 1.5, factor: 1, cantidadBase: 1.5, precioUnitario: 4, descuento: 0, subtotal: 6, afectoIgv: false },
+        { productoId: 3, presentacionId: null, descripcion: 'Huevos', cantidad: 5, factor: 1, cantidadBase: 5, precioUnitario: 0.5, descuento: 0, subtotal: 2.5, afectoIgv: false },
     ],
-    pagos: [{ metodo: 'EFECTIVO', monto: 12.5, referencia: null }],
+    pagos: [{ metodo: 'EFECTIVO', monto: 13.5, referencia: null }],
 };
 
 /** Reduce la imagen a 256 px como máximo y la devuelve como PNG (data URL). Así pesa poco */
@@ -188,6 +190,11 @@ export function Settings() {
                                     placeholder="Ej: Bodega Don Lucho" className={inputCls} />
                             </div>
                             <div>
+                                <label className={labelCls}>Razón social</label>
+                                <input value={form.razonSocial ?? ''} onChange={(e) => cambiar('razonSocial', e.target.value)} maxLength={150}
+                                    placeholder="Como figura en el RUC (opcional)" className={inputCls} />
+                            </div>
+                            <div>
                                 <label className={labelCls}>RUC o DNI</label>
                                 <input value={form.ruc ?? ''} onChange={(e) => cambiar('ruc', e.target.value.replace(/\D/g, ''))}
                                     maxLength={11} inputMode="numeric" placeholder="Ej: 10456789012 (opcional)" className={inputCls} />
@@ -224,6 +231,18 @@ export function Settings() {
                                 </div>
                                 <p className="text-xs text-gray-500 mt-2">Mide el rollo de tu ticketera: el ancho grande es 80 mm, el chico 58 mm.</p>
                             </div>
+
+                            <label className="flex items-start gap-3 cursor-pointer select-none">
+                                <input type="checkbox" checked={form.desglosaIgv} onChange={(e) => cambiar('desglosaIgv', e.target.checked)}
+                                    className="mt-1 w-4 h-4 accent-black" />
+                                <span>
+                                    <span className="text-sm font-semibold text-gray-700">Mostrar el IGV en el ticket (base + IGV 18%)</span>
+                                    <span className="block text-xs text-gray-500">
+                                        Desactívalo si la bodega está en el <b>Nuevo RUS</b>: ahí la boleta no separa impuestos.
+                                        El sistema igual calcula el IGV de cada venta para los reportes.
+                                    </span>
+                                </span>
+                            </label>
 
                             <div>
                                 <label className={labelCls}>Mensaje al pie del ticket</label>

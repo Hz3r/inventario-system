@@ -18,7 +18,16 @@ public class PerfilTienda {
     private Long id;
 
     private String nombre;
+
+    /** Nombre legal de la empresa o persona (el que figura en el RUC). nombre = nombre comercial */
+    @Column(name = "razon_social", length = 150)
+    private String razonSocial;
+
     private String ruc;
+
+    /** true = el ticket muestra base + IGV. false = Nuevo RUS (la boleta no discrimina impuestos) */
+    @Column(name = "desglosa_igv", nullable = false)
+    private Boolean desglosaIgv = true;
     private String direccion;
 
     @Column(length = 20)
