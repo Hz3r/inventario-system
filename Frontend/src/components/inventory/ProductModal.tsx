@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { inventarioService } from '../../services/inventarioService';
 import { ApiError } from '../../services/api';
+import { desglosarIgv } from '../../utils/igv';
+import { formatSoles } from '../../utils/formato';
 import {
     UNIDAD_CORTA, UNIDAD_LABEL,
     type Categoria, type Producto, type ProductoRequest, type UnidadMedida,
@@ -199,7 +201,9 @@ export function ProductModal({ isOpen, onClose, onSaved, productToEdit, categori
                         </Campo>
                         <div className="flex items-end pb-3">
                             <label className="flex items-center gap-3 cursor-pointer">
-                                <span className="text-sm font-semibold text-gray-600">Afecto a IGV</span>
+                                <span className="text-sm font-semibold text-gray-600" title="Desactívalo para productos exonerados: frutas, verduras, huevos...">
+                                    {form.igv ? 'Afecto a IGV (18%)' : 'Exonerado de IGV'}
+                                </span>
                                 <button type="button" onClick={() => set('igv', !form.igv)}
                                         className={`w-12 h-6 rounded-full p-1 transition-colors ${form.igv ? 'bg-black' : 'bg-gray-300'}`}>
                                     <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${form.igv ? 'translate-x-6' : 'translate-x-0'}`} />
@@ -209,17 +213,20 @@ export function ProductModal({ isOpen, onClose, onSaved, productToEdit, categori
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <Campo label={`Precio Costo (S/ por ${unidad})`} error={errores.precioCosto}>
+                        <Campo label={`Precio Costo ${form.igv ? 'con IGV ' : ''}(S/ por ${unidad})`} error={errores.precioCosto}>
                             <input type="number" min="0" step="0.01" value={form.precioCosto}
                                    onChange={(e) => set('precioCosto', e.target.value)}
                                    onWheel={(e) => e.currentTarget.blur()} placeholder="0.00" className={inputCls(errores.precioCosto)} />
+                            <DesgloseIgv monto={form.precioCosto} afecto={form.igv} />
                         </Campo>
-                        <Campo label={`Precio Venta (S/ por ${unidad})`} error={errores.precioVenta}>
+                        <Campo label={`Precio Venta ${form.igv ? 'con IGV ' : ''}(S/ por ${unidad})`} error={errores.precioVenta}>
                             <input type="number" min="0" step="0.01" value={form.precioVenta}
                                    onChange={(e) => set('precioVenta', e.target.value)}
                                    onWheel={(e) => e.currentTarget.blur()} placeholder="0.00" className={inputCls(errores.precioVenta)} />
+                            <DesgloseIgv monto={form.precioVenta} afecto={form.igv} />
                         </Campo>
                     </div>
+                    <Margen costo={form.precioCosto} venta={form.precioVenta} />
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         {editando ? (
@@ -275,5 +282,33 @@ export function ProductModal({ isOpen, onClose, onSaved, productToEdit, categori
                 </div>
             </form>
         </div>
+    );
+}
+
+/** Debajo de cada precio: la base y el IGV calculados solos (nadie los separa a mano) */
+function DesgloseIgv({ monto, afecto }: { monto: string; afecto: boolean }) {
+    const n = Number(monto);
+    if (!monto.trim() || !Number.isFinite(n) || n <= 0) return null;
+    if (!afecto) return <p className="text-xs text-gray-400 mt-1">Exonerado: no lleva IGV</p>;
+    const { base, igv } = desglosarIgv(n);
+    return (
+        <p className="text-xs text-gray-500 mt-1">
+            Sin IGV: <b>{formatSoles(base)}</b> · IGV 18%: <b>{formatSoles(igv)}</b>
+        </p>
+    );
+}
+
+/** Ganancia por unidad, para que el dueño vea al toque si el precio está bien puesto */
+function Margen({ costo, venta }: { costo: string; venta: string }) {
+    const c = Number(costo);
+    const v = Number(venta);
+    if (!costo.trim() || !venta.trim() || !(c > 0) || !(v > 0)) return null;
+    const ganancia = Math.round((v - c) * 100) / 100;
+    const pct = (ganancia / c) * 100;
+    return (
+        <p className={`text-sm -mt-2 ${ganancia < 0 ? 'text-red-600 font-semibold' : 'text-gray-600'}`}>
+            {ganancia < 0 ? '⚠ Se vende por debajo del costo: ' : 'Ganancia por unidad: '}
+            <b>{formatSoles(ganancia)}</b> ({pct.toFixed(1)}% sobre el costo)
+        </p>
     );
 }

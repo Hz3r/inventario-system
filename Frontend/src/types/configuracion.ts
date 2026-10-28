@@ -4,8 +4,10 @@
 export type AnchoTicket = 58 | 80;
 
 export interface PerfilTienda {
-    nombre: string;
+    nombre: string;               // nombre comercial ("Bodega Don Lucho")
+    razonSocial: string | null;   // nombre legal del RUC
     ruc: string | null;
+    desglosaIgv: boolean;         // false = Nuevo RUS: el ticket no separa el IGV
     direccion: string | null;
     telefono: string | null;
     mensajeTicket: string | null;

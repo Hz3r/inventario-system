@@ -52,6 +52,16 @@ public class Venta {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
 
+    // ---- Resumen tributario (total = opGravada + igv + opExonerada) ----
+    @Column(name = "op_gravada", nullable = false, precision = 10, scale = 2)
+    private BigDecimal opGravada = BigDecimal.ZERO;
+
+    @Column(name = "op_exonerada", nullable = false, precision = 10, scale = 2)
+    private BigDecimal opExonerada = BigDecimal.ZERO;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal igv = BigDecimal.ZERO;
+
     @Column(precision = 10, scale = 2)
     private BigDecimal efectivoRecibido;
 

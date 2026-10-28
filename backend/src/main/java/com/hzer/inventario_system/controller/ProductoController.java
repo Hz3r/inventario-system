@@ -35,6 +35,12 @@ public class ProductoController {
         return productoService.escanear(codigo);
     }
 
+    // PUT /api/inventory/productos/5/codigo-barras   { "codigo": "7750182000123" }
+    @PutMapping("/{id}/codigo-barras")
+    public ProductoResponse asignarCodigo(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        return productoService.asignarCodigo(id, body.get("codigo"));
+    }
+
     @GetMapping("/{id}")
     public ProductoResponse obtener(@PathVariable Long id) {
         return productoService.obtener(id);

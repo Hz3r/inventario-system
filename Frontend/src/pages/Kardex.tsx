@@ -4,6 +4,7 @@ import { inventarioService } from '../services/inventarioService';
 import { ApiError } from '../services/api';
 import { MOTIVO_LABEL, UNIDAD_CORTA, type Movimiento } from '../types/inventario';
 import { formatCantidad, formatFechaHora } from '../utils/formato';
+import { exportarKardexCsv, imprimirKardex, type InfoKardex } from '../utils/exportarKardex';
 
 type Rango = 'hoy' | '7dias' | 'mes' | 'personalizado';
 
@@ -87,6 +88,16 @@ export default function Kardex() {
     };
 
     const entradas = movimientos.filter((m) => m.cantidad > 0).length;
+
+    // Título y nombre de archivo para imprimir / exportar
+    const infoExport = (): InfoKardex => {
+        if (producto) {
+            return { titulo: `Producto: ${producto.nombre} (historial completo)`, archivo: `kardex_${producto.nombre.replace(/[^\w]+/g, '_')}` };
+        }
+        const [d, h] = calcularRango(rango, desde, hasta);
+        const dmy = (iso: string) => iso.split('-').reverse().join('/');
+        return { titulo: `Del ${dmy(d)} al ${dmy(h)}`, archivo: `kardex_${d}_${h}` };
+    };
     const salidas = movimientos.length - entradas;
 
     const btnRango = (r: Rango, texto: string) => (
@@ -104,9 +115,21 @@ export default function Kardex() {
 
     return (
         <div className="space-y-6 animate-fade-in">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Kardex de Inventario</h1>
-                <p className="text-sm text-gray-500">Todas las entradas y salidas de stock, con el saldo antes y después.</p>
+            <div className="flex flex-wrap justify-between items-start gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Kardex de Inventario</h1>
+                    <p className="text-sm text-gray-500">Todas las entradas y salidas de stock, con el saldo antes y después.</p>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={() => imprimirKardex(movimientos, infoExport())} disabled={loading || movimientos.length === 0}
+                            className="bg-white border border-gray-200 text-gray-800 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-50 disabled:opacity-40 transition">
+                        🖨️ Imprimir / PDF
+                    </button>
+                    <button onClick={() => exportarKardexCsv(movimientos, infoExport())} disabled={loading || movimientos.length === 0}
+                            className="bg-black text-white px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-800 disabled:opacity-40 transition">
+                        Exportar a Excel
+                    </button>
+                </div>
             </div>
 
             {/* Filtros */}

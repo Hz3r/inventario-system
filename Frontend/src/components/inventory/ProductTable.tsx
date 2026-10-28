@@ -1,5 +1,6 @@
 // src/components/inventory/ProductTable.tsx
 import { ESTADO_LABEL, UNIDAD_CORTA, type Producto } from '../../types/inventario';
+import { desglosarIgv } from '../../utils/igv';
 import { formatCantidad, formatSoles } from '../../utils/formato';
 import { SlidersHorizontal } from 'lucide-react';
 
@@ -95,6 +96,9 @@ export function ProductTable({ products, loading, onDelete, onEdit, onManage }: 
                                 <td className="px-6 py-4 text-sm font-bold text-green-600">
                                     {formatSoles(p.precioVenta)}
                                     {p.unidadMedida !== 'UND' && <span className="text-xs text-gray-400 font-medium"> /{UNIDAD_CORTA[p.unidadMedida]}</span>}
+                                    <span className="block text-[11px] font-medium text-gray-400">
+                                        {p.igv === false ? 'Exonerado' : `inc. IGV ${formatSoles(desglosarIgv(p.precioVenta ?? 0).igv)}`}
+                                    </span>
                                 </td>
 
                                 <td className="px-6 py-4 text-center">

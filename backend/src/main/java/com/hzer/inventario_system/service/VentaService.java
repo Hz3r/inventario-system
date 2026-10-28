@@ -1,5 +1,6 @@
 package com.hzer.inventario_system.service;
 
+import com.hzer.inventario_system.util.Igv;
 import com.hzer.inventario_system.dto.*;
 import com.hzer.inventario_system.entities.*;
 import com.hzer.inventario_system.exception.RecursoNoEncontradoException;
@@ -63,6 +64,7 @@ public class VentaService {
         venta.setSubtotal(subtotal);
         venta.setDescuento(descuento);
         venta.setTotal(total);
+        calcularIgv(venta);
 
         // ---- 3. Pagos: deben sumar exactamente el total ----
         BigDecimal sumaPagos = BigDecimal.ZERO;
@@ -170,7 +172,27 @@ public class VentaService {
         d.setCostoUnitario(producto.getPrecioCosto() != null ? producto.getPrecioCosto() : BigDecimal.ZERO);
         d.setDescuento(descLinea);
         d.setSubtotal(bruto.subtract(descLinea));
+        d.setAfectoIgv(!Boolean.FALSE.equals(producto.getIgv()));
         return d;
+    }
+
+    /**
+     * Separa el IGV automáticamente. Los precios ya lo incluyen:
+     *   - lo afecto (gravado) se divide entre 1.18 → base + IGV
+     *   - lo exonerado/inafecto no lleva IGV
+     * El descuento general se reparte en proporción entre ambos.
+     */
+    private void calcularIgv(Venta venta) {
+        BigDecimal gravadoBruto = venta.getDetalles().stream()
+                .filter(d -> Boolean.TRUE.equals(d.getAfectoIgv()))
+                .map(VentaDetalle::getSubtotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal descGravado = venta.getSubtotal().signum() == 0 ? BigDecimal.ZERO
+                : venta.getDescuento().multiply(gravadoBruto).divide(venta.getSubtotal(), 2, RoundingMode.HALF_UP);
+        BigDecimal gravado = gravadoBruto.subtract(descGravado);
+
+        venta.setOpGravada(Igv.base(gravado));
+        venta.setIgv(Igv.impuesto(gravado));
+        venta.setOpExonerada(venta.getTotal().subtract(gravado));
     }
 
     private void validarLimiteCredito(Cliente cliente, BigDecimal nuevoFiado) {

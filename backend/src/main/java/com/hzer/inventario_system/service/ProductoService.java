@@ -147,6 +147,20 @@ public class ProductoService {
         return aResponse(p);           // no hace falta save(): Hibernate guarda los cambios al terminar
     }
 
+    /**
+     * Desde el Punto de Venta: se escaneó un código que no existe y el cajero eligió
+     * a qué producto pertenece. Desde ahí ese código ya queda registrado.
+     */
+    @Transactional
+    public ProductoResponse asignarCodigo(Long id, String codigoBarras) {
+        Producto p = buscarProducto(id);
+        String codigo = limpiar(codigoBarras);
+        if (codigo == null) throw new ReglaNegocioException("El código está vacío");
+        validarCodigoLibre(codigo, p.getId(), null);
+        p.setCodigoBarras(codigo);
+        return aResponse(p);
+    }
+
     /** No se borra: se desactiva, para no romper ventas y kardex antiguos */
     @Transactional
     public void desactivar(Long id) {
